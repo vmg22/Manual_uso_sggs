@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual SGA - Instituto Carlos Guido Spano</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: var(--primary);
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-header h1 {
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-header .subtitle {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .nav-links {
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-bottom: 5px;
+        }
+        
+        .nav-links a {
+            display: block;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            font-size: 0.95em;
+        }
+        
+        .nav-links a:hover,
+        .nav-links a.active {
+            background: rgba(255,255,255,0.1);
+            border-left-color: var(--secondary);
+        }
+
+        .nav-links .parent-link {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+         .nav-links .parent-link::after {
+            content: '▼';
+            font-size: 0.7em;
+            transition: transform 0.3s ease;
+         }
+
+         .nav-links .parent-link.active::after {
+            transform: rotate(180deg);
+         }
+        
+        .nav-links .submenu {
+            list-style: none;
+            margin-left: 20px;
+            display: none;
+            overflow: hidden;
+            background: rgba(0,0,0,0.2);
+            border-radius: 0 0 5px 5px;
+        }
+        
+        .nav-links .submenu.active {
+            display: block;
+        }
+        
+        .nav-links .submenu a {
+            padding: 10px 20px;
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 40px;
+            max-width: calc(100% - 280px);
+        }
+        
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light);
+            font-size: 1.8em;
+        }
+        
+        .section h3 {
+            color: var(--secondary);
+            margin: 25px 0 15px 0;
+            font-size: 1.4em;
+        }
+
+        .section h4 {
+            color: var(--primary);
+            margin: 20px 0 10px 0;
+            font-size: 1.1em;
+        }
+
+        .section p, .section li {
+            color: #555;
+            margin-bottom: 10px;
+        }
+        
+        .section ul, .section ol {
+            margin-left: 20px;
+            padding-left: 15px;
+        }
+
+        .section code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--danger);
+        }
+
+        .section strong {
+            color: var(--dark);
+        }
+
+        .section img {
+            width: 100%;
+            max-width: 700px;
+            display: block;
+            margin: 20px auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+        }
+        
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        tr:hover {
+            background: #e3f2fd;
+        }
+        
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid var(--secondary);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .card.warning {
+            border-left-color: var(--warning);
+            background: #fffbf0;
+        }
+        
+        .card.danger {
+            border-left-color: var(--danger);
+            background: #fef0f0;
+        }
+        
+        .card.success {
+            border-left-color: var(--success);
+            background: #f0f9f4;
+        }
+        
+        /* Icon Styles */
+        .icon {
+            display: inline-block;
+            width: 24px;
+            text-align: center;
+            margin-right: 8px;
+        }
+        
+        /* Procedure Steps */
+        .procedure {
+            background: #fdfdfd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #eee;
+        }
+        
+        .procedure ol {
+            list-style-type: decimal;
+            margin-left: 20px;
+        }
+
+        .procedure li {
+            margin-bottom: 8px;
+            padding-left: 5px;
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1001;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px; /* Mantener ancho fijo al deslizar */
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                max-width: 100%;
+                padding: 70px 20px 20px 20px; /* Espacio para el botón */
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+
+            .section h2 {
+                font-size: 1.5em;
+            }
+            .section h3 {
+                font-size: 1.2em;
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            .sidebar, .mobile-menu-btn {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                max-width: 100%;
+                padding: 20px;
+            }
+            
+            .section {
+                display: block !important;
+                box-shadow: none;
+                margin-bottom: 20px;
+                page-break-inside: avoid;
+                padding: 0;
+            }
+
+            .card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+
+            img {
+                display: none; /* No imprimir imágenes de placeholder */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+    
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>Manual de Usuario - SGA</h1>
+                <div class="subtitle">Sistema de Gestión de Alumnos</div>
+                <div class="subtitle">Instituto Carlos Guido Spano</div>
+            </div>
+            
+            <ul class="nav-links">
+                <li><a href="#introduccion" class="nav-link active" data-section="introduccion">📋 Introducción</a></li>
+                <li><a href="#primeros-pasos" class="nav-link" data-section="primeros-pasos">🚀 Primeros Pasos</a></li>
+                <li><a href="#interfaz" class="nav-link" data-section="interfaz">💻 Recorrido por la Interfaz</a></li>
+                <li>
+                    <a href="#funcionalidades" class="nav-link parent-link" data-section="funcionalidades">⚙️ Funcionalidades</a>
+                    <ul class="submenu">
+                        <li><a href="#asistencias" class="nav-link" data-section="asistencias">📊 Gestión de Asistencias</a></li>
+                        <li><a href="#calificaciones" class="nav-link" data-section="calificaciones">📝 Gestión de Calificaciones</a></li>
+                        <li><a href="#comunicacion" class="nav-link" data-section="comunicacion">📧 Comunicación</a></li>
+                        <li><a href="#documentos" class="nav-link" data-section="documentos">📄 Reportes y Documentos</a></li>
+                        <li><a href="#administracion" class="nav-link" data-section="administracion">👨‍💼 Administración</a></li>
+                    </ul>
+                </li>
+                <li><a href="#configuracion" class="nav-link" data-section="configuracion">⚙️ Configuración</a></li>
+                <li><a href="#solucion-problemas" class="nav-link" data-section="solucion-problemas">🔧 Solución de Problemas</a></li>
+                <li><a href="#soporte" class="nav-link" data-section="soporte">📞 Soporte y Contacto</a></li>
+            </ul>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- 1. Introducción Section -->
+            <section id="introduccion" class="section active">
+                <h2>1. Introducción</h2>
+                <h3>¡Bienvenido al SGA del Instituto Carlos Guido Spano!</h3>
+                
+                <div class="card">
+                    <h4>¿Qué es el SGA?</h4>
+                    <p>El Sistema de Gestión de Alumnos (SGA) es una aplicación web diseñada para que el personal docente y las autoridades del instituto puedan gestionar eficientemente las asistencias, notas, exportar documentos oficiales y mantener una comunicación fluida con los padres o tutores de los alumnos.</p>
+                </div>
+                
+                <div class="card">
+                    <h4>¿Para quién es este manual?</h4>
+                    <p>Este manual está dirigido al personal de <strong>Autoridades</strong> (directivos, secretarios) y al <strong>Cuerpo Docente</strong> (profesores) del instituto. Ciertas secciones pueden aplicar solo a un tipo de rol.</p>
+                </div>
+                
+                <div class="card">
+                    <h4>Cómo usar este manual</h4>
+                    <p>Este documento describe las funciones clave del sistema. Puede usar el menú de navegación de la izquierda para saltar a la sección que necesite.</p>
+                </div>
+            </section>
+            
+            <!-- 2. Primeros Pasos Section -->
+            <section id="primeros-pasos" class="section">
+                <h2>2. Primeros Pasos</h2>
+                
+                <div class="card">
+                    <h3>2.1. Requisitos del sistema</h3>
+                    <ul>
+                        <li>Navegadores web compatibles (Chrome, Firefox, Safari, Edge - últimas versiones).</li>
+                        <li>Conexión a internet estable.</li>
+                        <li>El sistema está optimizado para un funcionamiento óptimo de hasta 20 usuarios conectados de forma simultánea.</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h3>2.2. Acceso al Sistema</h3>
+                    <p><strong>Cómo acceder:</strong> Ingrese la URL provista por el instituto en su navegador. (ej. <code>https://instituto-cgs.sistema.com</code>)</p>
+                    
+                    <h4>Iniciar Sesión:</h4>
+                    <div class="procedure">
+                        <ol>
+                            <li>Recibirá sus credenciales (usuario y contraseña) por parte de la administración del instituto.</li>
+                            <li>Ingrese a la URL provista en su navegador.</li>
+                            <li>Introduzca su <strong>Usuario</strong> y <strong>Contraseña</strong>.</li>
+                            <li>Haga clic en <strong>"INICIAR SESIÓN"</strong>.</li>
+                        </ol>
+                    </div>
+                    <img src="./img/login.jpeg" alt="Pantalla de Inicio de Sesión">
+                </div>
+
+                <div class="card warning">
+                    <h3>2.3. Recuperar Contraseña</h3>
+                    <p>(<strong>Pasos para el flujo de "Olvidé mi contraseña"</strong> ).</p>
+                    <br>
+                    <p>(<strong>Pasos 1</strong>  para haz clic en "Olvidé mi contraseña") y luego te saldra la sig pantalla eh ingresa tu correo.</p>
+                    <img src="./img/recuPass1.jpeg" alt="Pantalla de Inicio de Sesión">
+                    <p>(<strong>Pasos 2</strong>   Te llegara un mail a tu correo de  "Recuperacion de contraseña- Sistema de Gestion").</p>
+                    <img src="./img/correoRecu.jpeg" alt="Pantalla de Inicio de Sesión">
+                    <p>(<strong>Pasos 3</strong>  "Restablecer contraseña") Ingresa una nueva contraseña y haz click en "Restablecer contraseña"  .</p>
+                    <img src="./img/CambioPass.jpeg" alt="Pantalla de Inicio de Sesión">
+                </div>
+            </section>
+            
+            <!-- 3. Interfaz Section -->
+            <section id="interfaz" class="section">
+                <h2>3. Recorrido por la Interfaz</h2>
+                <p>La navegación principal del sistema se centra en la pantalla "Consulta Académica", que es la primera pantalla que verá después de iniciar sesión.</p>
+                
+                <div class="card">
+                    <h3>Barra de Navegación Superior</h3>
+                    <ul>
+                        <li><strong>Principal:</strong> Lo lleva de regreso a la pantalla "Consulta Académica".</li>
+                        <li><strong>Cerrar Sesión:</strong> Cierra su sesión y lo regresa a la pantalla de login.</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h3>Pantalla "Consulta Académica"</h3>
+                    <p>Esta pantalla le ofrece dos formas principales de navegar por el sistema:</p>
+                    <ol>
+                        <li><strong>Consulta por Alumno:</strong> Le permite buscar un alumno específico (generalmente por DNI y Año) para acceder a su perfil individual.</li>
+                        <li><strong>Consulta por Curso:</strong> Le permite buscar un curso/materia específico para ver listados de clase y realizar acciones grupales (como cargar notas o asistencias).</li>
+                    </ol>
+                    <img src="./img/dash-alumno.jpeg" alt="Pantalla Consulta Académica">
+                </div>
+
+                <div class="card">
+                    <h3>Perfil de Alumno</h3>
+                    <p>Al consultar por un alumno, accederá a su perfil, donde verá las "Acciones Disponibles" para <em>ese</em> alumno, tales como:</p>
+                    <ul>
+                        <li>Info Alumno</li>
+                        <li>Ver Asistencias</li>
+                        <li>Estado Académico</li>
+                        <li>Historial de Comunicaciones</li>
+                        <li>Certificados y Actas</li>
+                        <li>Generar Mail</li>
+                    </ul>
+                    <img src="./img/menu alumno.jpeg" alt="Perfil de Alumno - Acciones">
+                </div>
+
+                <div class="card">
+                    <h3>Perfil del Curso</h3>
+                    <p>Al consultar por un curso, accederá a su perfil, donde verá las "Acciones Disponibles" para <em>esa</em> clase, tales como:</p>
+                    <ul>
+                        <li>Ver Listado de Alumnos</li>
+                        <li>Resumen de Calificaciones</li>
+                        <li>Resumen de Asistencias</li>
+                        <li>Carga de Calificaciones</li>
+                        <li>Carga de Asistencia</li>
+                        <li>Comunicación Grupal</li>
+                    </ul>
+                    <img src="./img/menu curso.jpeg" alt="Perfil del Curso - Acciones">
+                </div>
+            </section>
+            
+            <!-- 4.0 Funcionalidades (Principal) -->
+            <section id="funcionalidades" class="section">
+                <h2>4. Funcionalidades Principales</h2>
+                <p>Esta sección detalla las operaciones clave del sistema. Puede navegar a una funcionalidad específica usando el submenú en la barra lateral izquierda.</p>
+                <ul>
+                    <li><strong>Gestión de Asistencias:</strong> Cargar y consultar faltas.</li>
+                    <li><strong>Gestión de Calificaciones:</strong> Cargar y consultar notas.</li>
+                    <li><strong>Comunicación:</strong> Enviar correos a tutores.</li>
+                    <li><strong>Reportes y Documentos:</strong> Generar certificados y listados.</li>
+                    <li><strong>Administración:</strong> Gestión de usuarios y cursos (solo autoridades).</li>
+                </ul>
+            </section>
+
+            <!-- 4.1 Asistencias Section -->
+            <section id="asistencias" class="section">
+                <h2>4.1. Gestión de Asistencias</h2>
+                
+                <div class="card">
+                    <h3>Cargar Asistencia (Rol: Docente/Autoridad)</h3>
+                    <div class="procedure">
+                        <ol>
+                            <li>Desde "Consulta Académica", seleccione "Consulta por Curso".</li>
+                            <li>Busque el Curso, Materia, Periodo y Año. Haga clic en "Buscar Curso".</li>
+                            <li>En la pantalla "Perfil del Curso", haga clic en <strong>"Carga de Asistencia"</strong>.</li>
+                            <li>Se mostrará el listado de alumnos.</li>
+                            <li>Para cada alumno, haga clic en el botón <strong>'P' (Presente)</strong> o <strong>'A' (Ausente)</strong> correspondiente a la fecha de la clase.</li>
+                            <li>El sistema guardará la asistencia (o haga clic en "Guardar").</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Visualizar Asistencia (Individual)</h3>
+                    <div class="procedure">
+                        <ol>
+                            <li>Desde "Consulta Académica", seleccione "Consulta por Alumno".</li>
+                            <li>Busque al alumno por DNI y Año.</li>
+                            <li>En la pantalla "Perfil de Alumno", haga clic en <strong>"Ver Asistencias"</strong>.</li>
+                            <li>Verá un resumen de asistencia por materia (porcentaje, faltas, clases presentes y ausentes).</li>
+                        </ol>
+                    </div>
+                    <img src="./img/asistencia alumno.jpeg" alt="Resumen de Asistencia por Alumno">
+                </div>
+
+                <div class="card">
+                    <h3>Visualizar Asistencia (Grupal - "Resumen de Asistencias")</h3>
+                    <div class="procedure">
+                        <ol>
+                            <li>Desde "Consulta Académica", seleccione "Consulta por Curso".</li>
+                            <li>Busque el curso y haga clic en <strong>"Resumen de Asistencias"</strong>.</li>
+                            <li>Verá un panel con el "Promedio General de Asistencia" del curso, un gráfico de torta (Presentes vs. Faltas) y un "Detalle de Asistencias por Alumno".</li>
+                            <li>También encontrará listados de "Mejor Asistencia" y "Asistencia Crítica".</li>
+                        </ol>
+                    </div>
+                    <img src="./img/asistencia curso.jpeg" alt="Resumen de Asistencias del Curso">
+                </div>
+            </section>
+            
+            <!-- 4.2 Calificaciones Section -->
+            <section id="calificaciones" class="section">
+                <h2>4.2. Gestión de Calificaciones</h2>
+                
+                <div class="card">
+                    <h3>Cargar Calificaciones (Rol: Docente)</h3>
+                    <div class="procedure">
+                        <ol>
+                            <li>Desde "Consulta Académica", seleccione "Consulta por Curso".</li>
+                            <li>Busque el Curso y la Materia.</li>
+                            <li>En la pantalla "Perfil del Curso", haga clic en <strong>"Carga de Calificaciones"</strong>.</li>
+                            <li>Verá el listado de alumnos. Ingrese las notas en las columnas (Nota 1, Nota 2, Nota 3...).</li>
+                            <li>Para guardar o editar una nota, haga clic en el icono de "Acción" (lápiz amarillo) al final de la fila del alumno.</li>
+                            <li>El sistema guarda automáticamente (o haga clic en "Guardar Cambios").</li>
+                        </ol>
+                    </div>
+                    <img src="./img/carga de notas.jpeg" alt="Pantalla de Carga de Calificaciones">
+                </div>
+                
+                <div class="card">
+                    <h3>Visualizar Calificaciones (Individual - "Estado Académico")</h3>
+                    <div class="procedure">
+                        <ol>
+                            <li>Desde "Consulta Académica", seleccione "Consulta por Alumno".</li>
+                            <li>Busque al alumno por DNI y Año.</li>
+                            <li>En la pantalla "Perfil de Alumno", haga clic en <strong>"Estado Académico"</strong>.</li>
+                            <li>Verá un resumen de notas por materia (notas cuatrimestrales, promedio y estado final).</li>
+                        </ol>
+                    </div>
+                    <img src="./img/estado academico alum.jpeg" alt="Estado Académico del Alumno">
+                </div>
+
+                <div class="card">
+                    <h3>Visualizar Calificaciones (Grupal - "Resumen de Calificaciones")</h3>
+                    <div class="procedure">
+                        <ol>
+                            <li>Desde "Consulta Académica", seleccione "Consulta por Curso".</li>
+                            <li>Busque el curso y haga clic en <strong>"Resumen de Calificaciones"</strong>.</li>
+                            <li>Verá un panel con el "Promedio General del Curso", un gráfico de torta (Aprobados vs. Desaprobados), y listados de "Mejores Alumnos" y "Alumnos en riesgo".</li>
+                        </ol>
+                    </div>
+                    <img src="./img/notas curso.jpeg" alt="Resumen de Calificaciones del Curso">
+                </div>
+            </section>
+            
+            <!-- 4.3 Comunicación Section -->
+            <section id="comunicacion" class="section">
+                <h2>4.3. Comunicación con Tutores</h2>
+                
+                <div class="card">
+                    <h3>4.3.1. Enviar Comunicación (Individual o Grupal)</h3>
+                    <div class="procedure">
+                        <ol>
+                            <li>Acceda desde:
+                                <ul>
+                                    <li><strong>Individual:</strong> "Consulta por Alumno" → "Perfil de Alumno" → <strong>"Generar Mail"</strong>.</li>
+                                    
+                                </ul>
+                            </li>
+                            
+                            <li>Configure los filtros (Año Lectivo, Tipo de Destinatario).</li>
+                            <li>Complete el formulario: "Tipo de Comunicación", "Asunto" y "Mensaje / Observaciones".</li>
+                            <li>Haga clic en <strong>"Enviar Mail"</strong>.</li>
+                        </ol>
+                    </div>
+                    <img src="./img/mail alumno.jpeg" alt="Pantalla de Generar Mail">
+                </div>
+
+                
+
+                <div class="card warning">
+                    <h3>4.3.2. Reporte de Alumnos en Seguimiento (Alerta de Asistencia)</h3>
+                    <p>Esta pantalla muestra un listado de "Alumnos que presentan notas bajas o ausentismo".</p>
+                    <div class="procedure">
+                        <ol>
+                            <li>La tabla incluye Alumno, Tutor, Email Tutor, Alertas de Riesgo (ej. "Asistencia Crítica", "Notas") y un botón de Acción (avión de papel) para enviar un mail individual.</li>
+                            <li>Para enviar un aviso masivo a los tutores seleccionados, marque la casilla de los alumnos deseados y haga clic en el botón <strong>"Enviar Alerta Asistencia (Seleccionados)"</strong>.</li>
+                        </ol>
+                    </div>
+                    <img src="./img/reportes curso.jpeg" alt="Reporte de Alumnos en Seguimiento">
+                </div>
+
+                <div class="card">
+                    <h3>4.3.3. Historial de Comunicaciones (Individual)</h3>
+                    <div class="procedure">
+                        <ol>
+                            <li>Desde "Consulta Académica", seleccione "Consulta por Alumno".</li>
+                            <li>Busque al alumno y en "Perfil de Alumno", haga clic en <strong>"Historial de Comunicaciones"</strong>.</li>
+                            <li>Podrá ver los correos enviados y (si aplica) actualizar estados (Confirmado, Asistió, etc.).</li>
+                        </ol>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 4.4 Documentos Section -->
+            <section id="documentos" class="section">
+                <h2>4.4. Exportación de Reportes y Documentos</h2>
+                
+                <div class="card">
+                    <h3>4.4.1. Certificados y Actas (Por Alumno)</h3>
+                    <div class="procedure">
+                        <ol>
+                            <li>Desde "Consulta Académica", seleccione "Consulta por Alumno".</li>
+                            <li>Busque al alumno y en "Perfil de Alumno", haga clic en <strong>"Certificados y Actas"</strong>.</li>
+                            <li>Seleccione el documento que desea generar:
+                                <ul>
+                                    <li>Constancia Alumno Regular</li>
+                                    <li>Certificado Abono Escolar</li>
+                                    <li>Certificado Comprobante de Vacante</li>
+                                    <li>Certificado Escolar</li>
+                                    <li>Constancia de Alumno en Trámite</li>
+                                    <li>Acta Volante Examen</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                    <img src="./img/menu certificados.jpeg" alt="Pantalla de Certificados y Actas">
+                </div>
+
+                <div class="card">
+                    <h3>4.4.2. Reportes de Curso (Listados, Planillas)</h3>
+                    <div class="procedure">
+                        <ol>
+                            <li>Desde "Consulta Académica", seleccione "Consulta por Curso".</li>
+                            <li>Busque el curso.</li>
+                            <li>Haga clic en <strong>"Ver Listado de Alumnos"</strong>.</li>
+                            <li>Verá un listado completo con DNI, Nombre, Apellido, Notas, Promedio, Asistencia (%) y Faltas.</li>
+                            <li>(Se asume que dentro de estas pantallas existe una opción para "Exportar" o "Imprimir" el listado/resumen).</li>
+                        </ol>
+                    </div>
+                    <img src="./img/lista curso.jpeg" alt="Pantalla de Listado de Alumnos">
+                </div>
+            </section>
+            
+            <!-- 4.5 Administración Section -->
+            <section id="administracion" class="section">
+                <h2>4.5. Administración Académica (Solo Autoridades)</h2>
+                
+                <div class="card">
+                    <h3>Consultar Información de Alumno y Tutor</h3>
+                    <div class="procedure">
+                        <ol>
+                            <li>Desde "Consulta Académica", seleccione "Consulta por Alumno".</li>
+                            <li>Busque al alumno y en "Perfil de Alumno", haga clic en <strong>"Info Alumno"</strong>.</li>
+                            <li>Verá dos secciones: "Informacion del Alumno" (datos personales) e "Informacion del Tutor" (datos de contacto del tutor).</li>
+                        </ol>
+                    </div>
+                    <img src="./img/infro alumno.jpeg" alt="Información de Alumno y Tutor">
+                </div>
+
+                <div class="card danger">
+                    <h3>Gestión (Alta, Baja, Modificación)</h3>
+                    <p>(Esta sección es solo para Autoridades y puede estar en un menú de "Administración" separado).</p>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Acción</th>
+                                    <th>Procedimiento</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Dar de Alta</strong></td>
+                                    <td>Ir a "Alumnos" → "Nuevo Alumno". Completar la ficha (datos personales, materias, año, datos de tutores).</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Modificar</strong></td>
+                                    <td>Buscar al alumno, hacer clic en "Editar" y actualizar la información.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Dar de Baja</strong></td>
+                                    <td>Buscar al alumno, hacer clic en "Opciones" → "Dar de Baja".</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p><em>* Un proceso similar aplica para la gestión de Docentes, Cursos y Materias.</em></p>
+                </div>
+            </section>
+            
+            <!-- 5. Configuración Section -->
+            <section id="configuracion" class="section">
+                <h2>5. Configuración de la Cuenta</h2>
+                
+                <div class="card">
+                    <h3>Editar tu Perfil</h3>
+                    <p>(Generalmente accesible haciendo clic en su nombre o un icono de perfil 👤 en la barra superior).</p>
+                    <ul>
+                        <li><strong>Cambiar Contraseña:</strong> Busque la sección "Seguridad" en su perfil para actualizar su contraseña.</li>
+                    </ul>
+                </div>
+
+                <div class="card warning">
+                    <h3>Seguridad</h3>
+                    <ul>
+                        <li>Haga clic en <strong>"Cerrar Sesión"</strong> en la barra de navegación superior al finalizar su trabajo.</li>
+                        <li>No comparta sus credenciales con nadie.</li>
+                        <li>Cambie su contraseña periódicamente.</li>
+                    </ul>
+                </div>
+            </section>
+            
+            <!-- 6. Solución de Problemas Section -->
+            <section id="solucion-problemas" class="section">
+                <h2>6. Solución de Problemas (FAQ)</h2>
+                
+                <h3>Preguntas Frecuentes (FAQ)</h3>
+
+                <div class="card warning">
+                    <h4>P: No puedo iniciar sesión, ¿qué hago?</h4>
+                    <p>R: Asegúrese de que está usando el <strong>Usuario</strong> y <strong>Contraseña</strong> correctos. Si el problema persiste, contacte a la administración del instituto para verificar sus credenciales.</p>
+                </div>
+                
+                <div class="card warning">
+                    <h4>P: ¿Cómo veo la información de un alumno específico?</h4>
+                    <p>R: En la pantalla "Consulta Académica", seleccione "Consulta por Alumno". Ingrese el <strong>DNI</strong> del alumno y seleccione el <strong>Año</strong> lectivo. Luego, haga clic en "Buscar Alumno" para acceder a su perfil.</p>
+                </div>
+
+                <div class="card warning">
+                    <h4>P: La página no carga correctamente.</h4>
+                    <p>R: Intente refrescar la página (Ctrl+R o Cmd+R). Si el problema persiste, borre la caché de su navegador o pruebe en un navegador diferente.</p>
+                </div>
+
+                <div class="card warning">
+                    <h4>P: ¿Cómo cargo las notas de mi materia?</h4>
+                    <p>R: Vaya a "Consulta Académica" → "Consulta por Curso". Busque su curso y materia. En el "Perfil del Curso", haga clic en "Carga de Calificaciones".</p>
+                </div>
+
+                <div class="card warning">
+                    <h4>P: ¿Cómo tomo asistencia?</h4>
+                    <p>R: Vaya a "Consulta Académica" → "Consulta por Curso". Busque su curso y materia. En el "Perfil del Curso", haga clic en "Carga de Asistencia" y utilice los botones 'P' y 'A' para cada alumno.</p>
+                </div>
+
+            </section>
+            
+            <!-- 7. Soporte Section -->
+            <section id="soporte" class="section">
+                <h2>7. Soporte y Contacto</h2>
+                <p>Si no encuentras la respuesta en este manual, nuestro equipo de soporte está listo para ayudarte.</p>
+                
+                <div class="card">
+                    <h3>Canales de Soporte</h3>
+                    <ul>
+                        <li>📧 <strong>Email de Soporte:</strong> <code>devtuc25@gmail.com</code></li>
+                        <li>📞 <strong>Teléfono:</strong> <code>3814759359</code></li>
+                        <li>🕒 <strong>Horario:</strong> <code>Lunes a Viernes de 8:00 a 17:00 hs</code></li>
+                    </ul>
+                </div>
+                
+                <div class="card warning">
+                    <h3>Información Requerida para Reportes</h3>
+                    <p>Al contactar a soporte, por favor proporcione:</p>
+                    <ul>
+                        <li>Su nombre de usuario y rol (docente/autoridad).</li>
+                        <li>La sección donde ocurre el problema (ej. "Carga de Notas").</li>
+                        <li>Una descripción del error o lo que intentaba hacer.</li>
+                        <li>(Opcional pero útil) Una captura de pantalla del error.</li>
+                    </ul>
+                </div>
+
+                <div class="card success">
+                    <h3>Soporte Prioritario</h3>
+                    <p><strong>Nota:</strong> El proyecto incluye un servicio de soporte prioritario durante los primeros 2 meses desde la entrega oficial del sistema.</p>
+                </div>
+
+                <div class="card">
+                    <p style="text-align: center; opacity: 0.7; font-size: 0.9em;">
+                        <strong>© 2025 Instituto Carlos Guido Spano</strong><br>
+                        Manual Versión 1.0
+                    </p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Navigation functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('.section');
+            const sidebar = document.getElementById('sidebar');
+            const parentLinks = document.querySelectorAll('.parent-link');
+
+            // Function to set active section
+            function setActiveSection(sectionId) {
+                if (!sectionId) return;
+
+                // Hide all sections
+                sections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // Show target section
+                const targetSection = document.getElementById(sectionId);
+                if (targetSection) {
+                    targetSection.classList.add('active');
+                    // Scroll to top of main content
+                    document.querySelector('.main-content').scrollTop = 0;
+                }
+                
+                // Update active nav link
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('data-section') === sectionId) {
+                        link.classList.add('active');
+
+                        // Open parent submenu if it exists
+                        const parentSubmenu = link.closest('.submenu');
+                        if(parentSubmenu) {
+                            parentSubmenu.classList.add('active');
+                            parentSubmenu.previousElementSibling.classList.add('active');
+                        }
+                    }
+                });
+                
+                // Close mobile sidebar if open
+                if (window.innerWidth <= 900) {
+                    sidebar.classList.remove('active');
+                }
+            }
+
+            // Handle submenu toggling
+            parentLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const sectionId = this.getAttribute('data-section');
+                    const submenu = this.nextElementSibling;
+                    
+                    // Toggle submenu
+                    if(submenu && submenu.classList.contains('submenu')) {
+                        submenu.classList.toggle('active');
+                        this.classList.toggle('active');
+                    }
+                    
+                    // Navigate to the parent section
+                    setActiveSection(sectionId);
+                });
+            });
+
+            // Handle regular link clicks
+            navLinks.forEach(link => {
+                if (!link.classList.contains('parent-link')) {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const sectionId = this.getAttribute('data-section');
+                        setActiveSection(sectionId);
+                        // Update hash in URL
+                        window.location.hash = sectionId;
+                    });
+                }
+            });
+            
+            // Set initial active section based on URL hash or default
+            let initialSection = window.location.hash.substring(1);
+            if (!initialSection || !document.getElementById(initialSection)) {
+                initialSection = 'introduccion';
+            }
+            setActiveSection(initialSection);
+        });
+        
+        // Mobile sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const mobileBtn = document.querySelector('.mobile-menu-btn');
+            
+            if (window.innerWidth <= 900 && 
+                sidebar.classList.contains('active') &&
+                !sidebar.contains(e.target) && 
+                !mobileBtn.contains(e.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
