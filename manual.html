@@ -1,1662 +1,2321 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Manual SGA - Instituto Carlos Guido Spano</title>
     <style>
-        :root {
-            --primary: #2c3e50;
-            --secondary: #3498db;
-            --accent: #e74c3c;
-            --light: #ecf0f1;
-            --dark: #2c3e50;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --danger: #e74c3c;
+      :root {
+        --primary: #2c3e50;
+        --secondary: #3498db;
+        --accent: #e74c3c;
+        --light: #ecf0f1;
+        --dark: #2c3e50;
+        --success: #27ae60;
+        --warning: #f39c12;
+        --danger: #e74c3c;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f8f9fa;
+      }
+
+      .container {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* Sidebar Navigation */
+      .sidebar {
+        width: 280px;
+        background: var(--primary);
+        color: white;
+        padding: 20px 0;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+        transition: transform 0.3s ease;
+        z-index: 1000;
+      }
+
+      .sidebar-header {
+        padding: 0 20px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 20px;
+      }
+
+      .sidebar-header h1 {
+        font-size: 1.2em;
+        margin-bottom: 5px;
+      }
+
+      .sidebar-header .subtitle {
+        font-size: 0.9em;
+        opacity: 0.8;
+      }
+
+      .nav-links {
+        list-style: none;
+      }
+
+      .nav-links li {
+        margin-bottom: 5px;
+      }
+
+      .nav-links a {
+        display: block;
+        padding: 12px 20px;
+        color: white;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+        font-size: 0.95em;
+      }
+
+      .nav-links a:hover,
+      .nav-links a.active {
+        background: rgba(255, 255, 255, 0.1);
+        border-left-color: var(--secondary);
+      }
+
+      .nav-links .parent-link {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .nav-links .parent-link::after {
+        content: "▼";
+        font-size: 0.7em;
+        transition: transform 0.3s ease;
+      }
+
+      .nav-links .parent-link.active::after {
+        transform: rotate(180deg);
+      }
+
+      .nav-links .submenu {
+        list-style: none;
+        margin-left: 20px;
+        display: none;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 0 0 5px 5px;
+      }
+
+      .nav-links .submenu.active {
+        display: block;
+      }
+
+      .nav-links .submenu a {
+        padding: 10px 20px;
+        font-size: 0.9em;
+        opacity: 0.9;
+      }
+
+      /* Main Content */
+      .main-content {
+        flex: 1;
+        margin-left: 280px;
+        padding: 40px;
+        max-width: calc(100% - 280px);
+      }
+
+      .section {
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        display: none;
+      }
+
+      .section.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f8f9fa;
-        }
-        
-        .container {
-            display: flex;
-            min-height: 100vh;
-        }
-        
-        /* Sidebar Navigation */
+      }
+
+      .section h2 {
+        color: var(--primary);
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--light);
+        font-size: 1.8em;
+      }
+
+      .section h3 {
+        color: var(--secondary);
+        margin: 25px 0 15px 0;
+        font-size: 1.4em;
+      }
+
+      .section h4 {
+        color: var(--primary);
+        margin: 20px 0 10px 0;
+        font-size: 1.1em;
+      }
+
+      .section p,
+      .section li {
+        color: #555;
+        margin-bottom: 10px;
+      }
+
+      .section ul,
+      .section ol {
+        margin-left: 20px;
+        padding-left: 15px;
+      }
+
+      .section code {
+        background: #f0f0f0;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: "Courier New", Courier, monospace;
+        color: var(--danger);
+      }
+
+      .section strong {
+        color: var(--dark);
+      }
+
+      .screenshot {
+        width: 100%;
+        max-width: 900px;
+        display: block;
+        margin: 20px auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border: 1px solid #ddd;
+        transition: transform 0.3s ease;
+      }
+
+      .screenshot:hover {
+        transform: scale(1.02);
+      }
+
+      .screenshot-caption {
+        text-align: center;
+        font-style: italic;
+        color: #666;
+        margin-top: 8px;
+        margin-bottom: 25px;
+        font-size: 0.9em;
+      }
+
+      .screenshot-container {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 20px 0;
+        border-left: 4px solid var(--secondary);
+      }
+
+      /* Table Styles */
+      .table-container {
+        overflow-x: auto;
+        margin: 20px 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+      }
+
+      th,
+      td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      th {
+        background: var(--primary);
+        color: white;
+        font-weight: 600;
+      }
+
+      tr:nth-child(even) {
+        background: #f8f9fa;
+      }
+
+      tr:hover {
+        background: #e3f2fd;
+      }
+
+      /* Card Styles */
+      .card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+        border-left: 4px solid var(--secondary);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+
+      .card.warning {
+        border-left-color: var(--warning);
+        background: #fffbf0;
+      }
+
+      .card.danger {
+        border-left-color: var(--danger);
+        background: #fef0f0;
+      }
+
+      .card.success {
+        border-left-color: var(--success);
+        background: #f0f9f4;
+      }
+
+      .card.info {
+        border-left-color: var(--secondary);
+        background: #f0f8ff;
+      }
+
+      /* Icon Styles */
+      .icon {
+        display: inline-block;
+        width: 24px;
+        text-align: center;
+        margin-right: 8px;
+      }
+
+      /* Procedure Steps */
+      .procedure {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 25px;
+        margin: 20px 0;
+        border: 1px solid #e9ecef;
+      }
+
+      .procedure ol {
+        list-style-type: decimal;
+        margin-left: 20px;
+      }
+
+      .procedure li {
+        margin-bottom: 12px;
+        padding-left: 5px;
+        line-height: 1.5;
+      }
+
+      .procedure-step {
+        background: white;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 6px;
+        border-left: 4px solid var(--secondary);
+      }
+
+      .procedure-step.warning {
+        border-left-color: var(--warning);
+        background: #fffbf0;
+      }
+
+      .procedure-step.danger {
+        border-left-color: var(--danger);
+        background: #fef0f0;
+      }
+
+      .procedure-step.success {
+        border-left-color: var(--success);
+        background: #f0f9f4;
+      }
+
+      /* Mobile Menu Button */
+      .mobile-menu-btn {
+        display: none;
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 1001;
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1.2em;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Responsive Design */
+      @media (max-width: 900px) {
         .sidebar {
-            width: 280px;
-            background: var(--primary);
-            color: white;
-            padding: 20px 0;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            transition: transform 0.3s ease;
-            z-index: 1000;
-        }
-        
-        .sidebar-header {
-            padding: 0 20px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 20px;
-        }
-        
-        .sidebar-header h1 {
-            font-size: 1.2em;
-            margin-bottom: 5px;
-        }
-        
-        .sidebar-header .subtitle {
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
-        
-        .nav-links {
-            list-style: none;
-        }
-        
-        .nav-links li {
-            margin-bottom: 5px;
-        }
-        
-        .nav-links a {
-            display: block;
-            padding: 12px 20px;
-            color: white;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border-left: 3px solid transparent;
-            font-size: 0.95em;
-        }
-        
-        .nav-links a:hover,
-        .nav-links a.active {
-            background: rgba(255,255,255,0.1);
-            border-left-color: var(--secondary);
+          transform: translateX(-100%);
+          width: 280px;
         }
 
-        .nav-links .parent-link {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .nav-links .parent-link::after {
-            content: '▼';
-            font-size: 0.7em;
-            transition: transform 0.3s ease;
+        .sidebar.active {
+          transform: translateX(0);
         }
 
-        .nav-links .parent-link.active::after {
-            transform: rotate(180deg);
-        }
-        
-        .nav-links .submenu {
-            list-style: none;
-            margin-left: 20px;
-            display: none;
-            overflow: hidden;
-            background: rgba(0,0,0,0.2);
-            border-radius: 0 0 5px 5px;
-        }
-        
-        .nav-links .submenu.active {
-            display: block;
-        }
-        
-        .nav-links .submenu a {
-            padding: 10px 20px;
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-        
-        /* Main Content */
         .main-content {
-            flex: 1;
-            margin-left: 280px;
-            padding: 40px;
-            max-width: calc(100% - 280px);
+          margin-left: 0;
+          max-width: 100%;
+          padding: 70px 20px 20px 20px;
         }
-        
+
+        .mobile-menu-btn {
+          display: block;
+        }
+
         .section {
-            background: white;
-            border-radius: 10px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            display: none;
+          padding: 20px;
         }
-        
-        .section.active {
-            display: block;
-            animation: fadeIn 0.5s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
+
         .section h2 {
-            color: var(--primary);
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--light);
-            font-size: 1.8em;
+          font-size: 1.5em;
         }
-        
         .section h3 {
-            color: var(--secondary);
-            margin: 25px 0 15px 0;
-            font-size: 1.4em;
-        }
-
-        .section h4 {
-            color: var(--primary);
-            margin: 20px 0 10px 0;
-            font-size: 1.1em;
-        }
-
-        .section p, .section li {
-            color: #555;
-            margin-bottom: 10px;
-        }
-        
-        .section ul, .section ol {
-            margin-left: 20px;
-            padding-left: 15px;
-        }
-
-        .section code {
-            background: #f0f0f0;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'Courier New', Courier, monospace;
-            color: var(--danger);
-        }
-
-        .section strong {
-            color: var(--dark);
+          font-size: 1.2em;
         }
 
         .screenshot {
-            width: 100%;
-            max-width: 900px;
-            display: block;
-            margin: 20px auto;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border: 1px solid #ddd;
-            transition: transform 0.3s ease;
+          max-width: 100%;
         }
+      }
 
-        .screenshot:hover {
-            transform: scale(1.02);
-        }
-
-        .screenshot-caption {
-            text-align: center;
-            font-style: italic;
-            color: #666;
-            margin-top: 8px;
-            margin-bottom: 25px;
-            font-size: 0.9em;
-        }
-
-        .screenshot-container {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border-left: 4px solid var(--secondary);
-        }
-        
-        /* Table Styles */
-        .table-container {
-            overflow-x: auto;
-            margin: 20px 0;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-        }
-        
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        th {
-            background: var(--primary);
-            color: white;
-            font-weight: 600;
-        }
-        
-        tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-        
-        tr:hover {
-            background: #e3f2fd;
-        }
-        
-        /* Card Styles */
-        .card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 15px 0;
-            border-left: 4px solid var(--secondary);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        
-        .card.warning {
-            border-left-color: var(--warning);
-            background: #fffbf0;
-        }
-        
-        .card.danger {
-            border-left-color: var(--danger);
-            background: #fef0f0;
-        }
-        
-        .card.success {
-            border-left-color: var(--success);
-            background: #f0f9f4;
-        }
-        
-        .card.info {
-            border-left-color: var(--secondary);
-            background: #f0f8ff;
-        }
-        
-        /* Icon Styles */
-        .icon {
-            display: inline-block;
-            width: 24px;
-            text-align: center;
-            margin-right: 8px;
-        }
-        
-        /* Procedure Steps */
-        .procedure {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 25px;
-            margin: 20px 0;
-            border: 1px solid #e9ecef;
-        }
-        
-        .procedure ol {
-            list-style-type: decimal;
-            margin-left: 20px;
-        }
-
-        .procedure li {
-            margin-bottom: 12px;
-            padding-left: 5px;
-            line-height: 1.5;
-        }
-
-        .procedure-step {
-            background: white;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 6px;
-            border-left: 4px solid var(--secondary);
-        }
-
-        .procedure-step.warning {
-            border-left-color: var(--warning);
-            background: #fffbf0;
-        }
-
-        .procedure-step.danger {
-            border-left-color: var(--danger);
-            background: #fef0f0;
-        }
-
-        .procedure-step.success {
-            border-left-color: var(--success);
-            background: #f0f9f4;
-        }
-
-        /* Mobile Menu Button */
+      /* Print Styles */
+      @media print {
+        .sidebar,
         .mobile-menu-btn {
-            display: none;
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 1001;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1.2em;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+          display: none;
         }
-        
-        /* Responsive Design */
-        @media (max-width: 900px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: 280px;
-            }
-            
-            .sidebar.active {
-                transform: translateX(0);
-            }
-            
-            .main-content {
-                margin-left: 0;
-                max-width: 100%;
-                padding: 70px 20px 20px 20px;
-            }
-            
-            .mobile-menu-btn {
-                display: block;
-            }
-            
-            .section {
-                padding: 20px;
-            }
 
-            .section h2 {
-                font-size: 1.5em;
-            }
-            .section h3 {
-                font-size: 1.2em;
-            }
-
-            .screenshot {
-                max-width: 100%;
-            }
+        .main-content {
+          margin-left: 0;
+          max-width: 100%;
+          padding: 20px;
         }
-        
-        /* Print Styles */
-        @media print {
-            .sidebar, .mobile-menu-btn {
-                display: none;
-            }
-            
-            .main-content {
-                margin-left: 0;
-                max-width: 100%;
-                padding: 20px;
-            }
-            
-            .section {
-                display: block !important;
-                box-shadow: none;
-                margin-bottom: 20px;
-                page-break-inside: avoid;
-                padding: 0;
-            }
 
-            .card {
-                box-shadow: none;
-                border: 1px solid #ddd;
-            }
-
-            .screenshot {
-                display: none;
-            }
+        .section {
+          display: block !important;
+          box-shadow: none;
+          margin-bottom: 20px;
+          page-break-inside: avoid;
+          padding: 0;
         }
+
+        .card {
+          box-shadow: none;
+          border: 1px solid #ddd;
+        }
+
+        .screenshot {
+          display: none;
+        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Mobile Menu Button -->
     <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
-    
+
     <div class="container">
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h1>Manual de Usuario - SGA</h1>
-                <div class="subtitle">Sistema de Gestión de Alumnos</div>
-                <div class="subtitle">Instituto Carlos Guido Spano</div>
-            </div>
-            
-            <ul class="nav-links">
-                <li><a href="#introduccion" class="nav-link active" data-section="introduccion">📋 Introducción</a></li>
-                <li><a href="#primeros-pasos" class="nav-link" data-section="primeros-pasos">🚀 Primeros Pasos</a></li>
-                <li><a href="#interfaz" class="nav-link" data-section="interfaz">💻 Recorrido por la Interfaz</a></li>
-                <li>
-                    <a href="#procedimientos" class="nav-link parent-link" data-section="procedimientos">📝 Procedimientos</a>
-                    <ul class="submenu">
-                        <li><a href="#proc-alumno" class="nav-link" data-section="proc-alumno">👤 Crear Alumno</a></li>
-                        <li><a href="#proc-anioLectivo" class="nav-link" data-section="proc-anioLectivo">📅 Crear Año Lectivo</a></li>
-                        <li><a href="#proc-curso" class="nav-link" data-section="proc-curso">📚 Crear Curso</a></li>
-                        <li><a href="#proc-materia" class="nav-link" data-section="proc-materia">📖 Crear Materia</a></li>
-                        <li><a href="#proc-asignacionMateria" class="nav-link" data-section="proc-asignacionMateria">🔗 Asignar Materia a Curso</a></li>
-                        <li><a href="#proc-docente" class="nav-link" data-section="proc-docente">👨‍🏫 Crear Docente</a></li>                        
-                        <li><a href="#proc-notas" class="nav-link" data-section="proc-notas">📊 Cargar Notas</a></li>
-                        <li><a href="#proc-asistencia" class="nav-link" data-section="proc-asistencia">✅ Cargar Asistencia</a></li>
-                        <li><a href="#proc-comunicacion" class="nav-link" data-section="proc-comunicacion">📧 Enviar Comunicación</a></li>
-                        <li><a href="#proc-certificados" class="nav-link" data-section="proc-certificados">📄 Generar Certificados</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#funcionalidades" class="nav-link parent-link" data-section="funcionalidades">⚙️ Funcionalidades</a>
-                    
-                </li>
-                <li><a href="#configuracion" class="nav-link" data-section="configuracion">⚙️ Configuración</a></li>
-                <li><a href="#solucion-problemas" class="nav-link" data-section="solucion-problemas">🔧 Solución de Problemas</a></li>
-                <li><a href="#soporte" class="nav-link" data-section="soporte">📞 Soporte y Contacto</a></li>
+      <!-- Sidebar Navigation -->
+      <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <h1>Manual de Usuario - SGA</h1>
+          <div class="subtitle">Sistema de Gestión de Alumnos</div>
+          <div class="subtitle">Instituto Carlos Guido Spano</div>
+        </div>
+
+        <ul class="nav-links">
+          <li>
+            <a
+              href="#introduccion"
+              class="nav-link active"
+              data-section="introduccion"
+              >📋 Introducción</a
+            >
+          </li>
+          <li>
+            <a
+              href="#primeros-pasos"
+              class="nav-link"
+              data-section="primeros-pasos"
+              >🚀 Primeros Pasos</a
+            >
+          </li>
+          <li>
+            <a href="#interfaz" class="nav-link" data-section="interfaz"
+              >💻 Recorrido por la Interfaz</a
+            >
+          </li>
+          <li>
+            <a
+              href="#procedimientos"
+              class="nav-link parent-link"
+              data-section="procedimientos"
+              >📝 Procedimientos</a
+            >
+            <ul class="submenu">
+              <li>
+                <a
+                  href="#proc-alumno"
+                  class="nav-link"
+                  data-section="proc-alumno"
+                  >👤 Crear Alumno</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#proc-anioLectivo"
+                  class="nav-link"
+                  data-section="proc-anioLectivo"
+                  >📅 Crear Año Lectivo</a
+                >
+              </li>
+              <li>
+                <a href="#proc-curso" class="nav-link" data-section="proc-curso"
+                  >📚 Crear Curso</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#proc-materia"
+                  class="nav-link"
+                  data-section="proc-materia"
+                  >📖 Crear Materia</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#proc-asignacionMateria"
+                  class="nav-link"
+                  data-section="proc-asignacionMateria"
+                  >🔗 Asignar Materia a Curso</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#proc-docente"
+                  class="nav-link"
+                  data-section="proc-docente"
+                  >👨‍🏫 Crear Docente</a
+                >
+              </li>
+              <li>
+                <a href="#proc-notas" class="nav-link" data-section="proc-notas"
+                  >📊 Cargar Notas</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#proc-asistencia"
+                  class="nav-link"
+                  data-section="proc-asistencia"
+                  >✅ Cargar Asistencia</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#proc-comunicacion"
+                  class="nav-link"
+                  data-section="proc-comunicacion"
+                  >📧 Enviar Comunicación</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#proc-certificados"
+                  class="nav-link"
+                  data-section="proc-certificados"
+                  >📄 Generar Certificados</a
+                >
+              </li>
             </ul>
-        </nav>
-        
-        <!-- Main Content -->
-        <main class="main-content">
-            
-            <!-- 1. Introducción Section -->
-            <section id="introduccion" class="section active">
-                <h2>1. Introducción</h2>
-                <h3>¡Bienvenido al SGA del Instituto Carlos Guido Spano!</h3>
-                
-                <div class="card">
-                    <h4>¿Qué es el SGA?</h4>
-                    <p>El Sistema de Gestión de Alumnos (SGA) es una aplicación web diseñada para que el personal docente y las autoridades del instituto puedan gestionar eficientemente las asistencias, notas, exportar documentos oficiales y mantener una comunicación fluida con los padres o tutores de los alumnos.</p>
-                </div>
+          </li>
+          <li>
+            <a
+              href="#funcionalidades"
+              class="nav-link parent-link"
+              data-section="funcionalidades"
+              >⚙️ Funcionalidades</a
+            >
+          </li>
+          <li>
+            <a
+              href="#configuracion"
+              class="nav-link"
+              data-section="configuracion"
+              >⚙️ Configuración</a
+            >
+          </li>
+          <li>
+            <a
+              href="#solucion-problemas"
+              class="nav-link"
+              data-section="solucion-problemas"
+              >🔧 Solución de Problemas</a
+            >
+          </li>
+          <li>
+            <a href="#soporte" class="nav-link" data-section="soporte"
+              >📞 Soporte y Contacto</a
+            >
+          </li>
+        </ul>
+      </nav>
 
-                <div class="screenshot-container">
-                    <img src="./img/dash-alumno.jpeg" alt="Dashboard principal del SGA" class="screenshot">
-                    <div class="screenshot-caption">Figura 1: Vista general del sistema SGA</div>
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- 1. Introducción Section -->
+        <section id="introduccion" class="section active">
+          <h2>1. Introducción</h2>
+          <h3>¡Bienvenido al SGA del Instituto Carlos Guido Spano!</h3>
+
+          <div class="card">
+            <h4>¿Qué es el SGA?</h4>
+            <p>
+              El Sistema de Gestión de Alumnos (SGA) es una aplicación web
+              diseñada para que el personal docente y las autoridades del
+              instituto puedan gestionar eficientemente las asistencias, notas,
+              exportar documentos oficiales y mantener una comunicación fluida
+              con los padres o tutores de los alumnos.
+            </p>
+          </div>
+
+          <div class="screenshot-container">
+            <img
+              src="./home docente.png"
+              alt="Dashboard principal del SGA"
+              class="screenshot"
+            />
+            <div class="screenshot-caption">
+              Figura 1: Vista general del sistema SGA
+            </div>
+          </div>
+
+          <div class="card">
+            <h4>¿Para quién es este manual?</h4>
+            <p>
+              Este manual está dirigido al personal de
+              <strong>Autoridades</strong> (directivos, secretarios) y al
+              <strong>Cuerpo Docente</strong> (profesores) del instituto.
+              Ciertas secciones pueden aplicar solo a un tipo de rol.
+            </p>
+          </div>
+
+          <div class="card">
+            <h4>Cómo usar este manual</h4>
+            <p>
+              Este documento describe las funciones clave del sistema. Puede
+              usar el menú de navegación de la izquierda para saltar a la
+              sección que necesite.
+            </p>
+          </div>
+        </section>
+
+        <!-- 2. Primeros Pasos Section -->
+        <section id="primeros-pasos" class="section">
+          <h2>2. Primeros Pasos</h2>
+
+          <div class="card">
+            <h3>2.1. Requisitos del sistema</h3>
+            <ul>
+              <li>
+                Navegadores web compatibles (Chrome, Firefox, Safari, Edge -
+                últimas versiones).
+              </li>
+              <li>Conexión a internet estable.</li>
+              <li>
+                El sistema está optimizado para un funcionamiento óptimo de
+                hasta 20 usuarios conectados de forma simultánea.
+              </li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>2.2. Acceso al Sistema</h3>
+            <p>
+              <strong>Cómo acceder:</strong> Ingrese la URL provista por el
+              instituto en su navegador. (ej.
+              <code>https://instituto-cgs.sistema.com</code>)
+            </p>
+
+            <h4>Iniciar Sesión:</h4>
+            <div class="procedure">
+              <ol>
+                <li>
+                  Recibirá sus credenciales (usuario y contraseña) por parte de
+                  la administración del instituto.
+                </li>
+                <li>Ingrese a la URL provista en su navegador.</li>
+                <li>
+                  Introduzca su <strong>Usuario</strong> y
+                  <strong>Contraseña</strong>.
+                </li>
+                <li>Haga clic en <strong>"INICIAR SESIÓN"</strong>.</li>
+              </ol>
+            </div>
+
+            <div class="screenshot-container">
+              <img
+                src="./img/login.jpeg"
+                alt="Pantalla de inicio de sesión"
+                class="screenshot"
+              />
+              <div class="screenshot-caption">
+                Figura 2: Pantalla de Login del SGA
+              </div>
+            </div>
+          </div>
+
+          <div class="card warning">
+            <h3>2.3. Recuperar Contraseña</h3>
+            <p>Si olvidó su contraseña, siga estos pasos:</p>
+            <div class="procedure">
+              <ol>
+                <li>
+                  En la pantalla de login, haga clic en
+                  <strong>"¿Olvidó su contraseña?"</strong>
+                </li>
+                <li>Ingrese su email institucional registrado</li>
+                <li>
+                  Revise su correo y siga las instrucciones del email recibido
+                </li>
+                <li>Establezca una nueva contraseña</li>
+                <li>Si no recibe el email, contacte a la administración</li>
+              </ol>
+            </div>
+
+            <div class="screenshot-container">
+              <img
+                src="./img/recuPass1.jpeg"
+                alt="Pantalla de recuperación de contraseña"
+                class="screenshot"
+              />
+              <div class="screenshot-caption">
+                Figura 3: Recuperación de contraseña
+              </div>
+            </div>
+            <div class="screenshot-container">
+              <img
+                src="./img/correoRecu.jpeg"
+                alt="Pantalla de recuperación de contraseña"
+                class="screenshot"
+              />
+              <div class="screenshot-caption">
+                Figura 4: Mail de Recuperación de contraseña
+              </div>
+            </div>
+            <div class="screenshot-container">
+              <img
+                src="./img/CambioPass.jpeg"
+                alt="Pantalla de recuperación de contraseña"
+                class="screenshot"
+              />
+              <div class="screenshot-caption">
+                Figura 5: Cambio de contraseña
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Interfaz Section -->
+        <section id="interfaz" class="section">
+          <h2>3. Recorrido por la Interfaz - Admin</h2>
+          <p>
+            La navegación principal del sistema se centra en la pantalla
+            "Consulta Académica", que es la primera pantalla que verá después de
+            iniciar sesión.
+          </p>
+
+          <div class="screenshot-container">
+            <img
+              src="./1.png"
+              alt="Pantalla de Consulta Académica"
+              class="screenshot"
+            />
+            <div class="screenshot-caption">
+              Figura 6: Pantalla principal - Consulta Académica
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Barra de Navegación Superior</h3>
+            <ul>
+              <li>
+                <strong>Principal:</strong> Lo lleva de regreso a la pantalla
+                "Consulta Académica".
+              </li>
+              <li>
+                <strong>Cerrar Sesión:</strong> Cierra su sesión y lo regresa a
+                la pantalla de login.
+              </li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>Pantalla "Consulta Académica"</h3>
+            <p>
+              Esta pantalla le ofrece cuatro formas principales de navegar por
+              el sistema:
+            </p>
+            <ol>
+              <li>
+                <strong>Consulta por Alumno:</strong> Le permite buscar un
+                alumno específico (generalmente por DNI y Año) para acceder a su
+                perfil individual.
+              </li>
+              <li>
+                <strong>Consulta por Curso:</strong> Le permite buscar un
+                curso/materia específico para ver listados de clase y realizar
+                acciones grupales (como cargar notas o asistencias).
+              </li>
+              <li>
+                <strong>Envio de Email:</strong> Le permite el envio de mails
+                por un curso/materia específico
+              </li>
+              <li>
+                <strong>Gestion de datos:</strong> Le permite realizar las altas
+                de ALUMNOS | DOCENTES | AÑO LECTIVO | MATERIAS | CURSOS |
+                ASIGANCION DE CURSOS .
+              </li>
+            </ol>
+          </div>
+
+          <div class="card">
+            <h3>Dashboard de Gestión Datos</h3>
+            <p>
+              Para usuarios con permisos de administración, existe un dashboard
+              central que permite acceder rápidamente a todas las funciones del
+              sistema:
+            </p>
+            <ul>
+              <li>
+                <strong>Año Lectivo:</strong> Configuración de períodos
+                académicos
+              </li>
+              <li><strong>Docentes:</strong> Gestión del personal docente</li>
+              <li><strong>Alumnos:</strong> Administración de estudiantes</li>
+              <li>
+                <strong>Cursos:</strong> Creación y configuración de cursos
+              </li>
+              <li><strong>Materias:</strong> Catálogo de asignaturas</li>
+              <li>
+                <strong>Asignación Materia-Curso:</strong> Planes de estudio
+              </li>
+            </ul>
+
+            <div class="screenshot-container">
+              <img
+                src="./gestion de datos.png"
+                alt="Dashboard de Gestión Académica"
+                class="screenshot"
+              />
+              <div class="screenshot-caption">
+                Figura 7: Dashboard de Gestión Datos (solo autoridades)
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Perfil de Alumno</h3>
+            <p>
+              Al consultar por un alumno, accederá a su perfil, donde verá las
+              "Acciones Disponibles" para <em>ese</em> alumno, tales como:
+            </p>
+            <ul>
+              <li>Info Alumno</li>
+              <li>Ver Asistencias</li>
+              <li>Estado Académico</li>
+              <li>Historial de Comunicaciones</li>
+              <li>Certificados y Actas</li>
+              <li>Generar Mail</li>
+            </ul>
+
+            <div class="screenshot-container">
+              <img
+                src="./img/menu alumno.jpeg"
+                alt="Perfil de Alumno"
+                class="screenshot"
+              />
+              <div class="screenshot-caption">
+                Figura 8: Perfil individual de alumno con acciones disponibles
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Perfil del Curso</h3>
+            <p>
+              Al consultar por un curso, accederá a su perfil, donde verá las
+              "Acciones Disponibles" para <em>esa</em> clase, tales como:
+            </p>
+            <ul>
+              <li>Ver Listado de Alumnos</li>
+              <li>Resumen de Calificaciones</li>
+              <li>Resumen de Asistencias</li>
+              <li>Carga de Calificaciones</li>
+              <li>Carga de Asistencia</li>
+              <li>Comunicación Grupal</li>
+            </ul>
+
+            <div class="screenshot-container">
+              <img
+                src="./img/menu curso.jpeg"
+                alt="Perfil de Curso"
+                class="screenshot"
+              />
+              <div class="screenshot-caption">
+                Figura 9: Perfil de curso con acciones grupales
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. Procedimientos Section -->
+        <section id="procedimientos" class="section">
+          <h2>4. Procedimientos Paso a Paso</h2>
+          <p>
+            En esta sección encontrará instrucciones detalladas para realizar
+            las tareas más comunes en el sistema.
+          </p>
+
+          <div class="card info">
+            <h3>📝 Seleccione un procedimiento específico del menú lateral</h3>
+            <p>
+              Use el menú de navegación a la izquierda para acceder a
+              procedimientos detallados de:
+            </p>
+            <ul>
+              <li>
+                <strong>Crear Alumno:</strong> Alta de nuevos estudiantes en el
+                sistema
+              </li>
+              <li>
+                <strong>Crear Año Lectivo:</strong> Configuración de períodos
+                académicos
+              </li>
+              <li><strong>Crear Curso:</strong> Configuración de cursos</li>
+              <li><strong>Crear Materia:</strong> Gestión de asignaturas</li>
+              <li>
+                <strong>Asignar Materia a Curso:</strong> Planes de estudio
+              </li>
+              <li>
+                <strong>Crear Docente:</strong> Gestión de personal docente
+              </li>
+              <li><strong>Cargar Notas:</strong> Registro de calificaciones</li>
+              <li>
+                <strong>Cargar Asistencia:</strong> Control de
+                presencia/ausencia
+              </li>
+              <li>
+                <strong>Enviar Comunicación:</strong> Contacto con tutores
+              </li>
+              <li>
+                <strong>Generar Certificados:</strong> Documentación oficial
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 4.1 Procedimiento Crear Alumno -->
+        <section id="proc-alumno" class="section">
+          <h2>4.1. Procedimiento: Crear un Nuevo Alumno</h2>
+          <div class="card danger">
+            <h3>⚠️ Solo para Personal Autorizado</h3>
+            <p>
+              Este procedimiento solo puede ser realizado por usuarios con
+              permisos de administración.
+            </p>
+          </div>
+
+          <div class="procedure">
+            <h3>Paso a Paso - Alta de Alumno</h3>
+            <ol>
+              <li>
+                <div class="procedure-step">
+                  <strong>Desde el menu de Consulta Academica</strong><br />
+                  Desde el Dashboard de Consulta Académica, haga clic en
+                  <strong>"Gestion de datos"</strong>
                 </div>
-                
-                <div class="card">
-                    <h4>¿Para quién es este manual?</h4>
-                    <p>Este manual está dirigido al personal de <strong>Autoridades</strong> (directivos, secretarios) y al <strong>Cuerpo Docente</strong> (profesores) del instituto. Ciertas secciones pueden aplicar solo a un tipo de rol.</p>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Iniciar creación de nuevo alumno</strong><br />
+                  Haga clic en el botón Tarjeta <strong>"Alumno"</strong>
                 </div>
-                
-                <div class="card">
-                    <h4>Cómo usar este manual</h4>
-                    <p>Este documento describe las funciones clave del sistema. Puede usar el menú de navegación de la izquierda para saltar a la sección que necesite.</p>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Click en boton de Agregar alumno</strong><br />
+                  Haga clic en el botón <strong>"+ Nuevo Alumno"</strong>
                 </div>
-            </section>
-            
-            <!-- 2. Primeros Pasos Section -->
-            <section id="primeros-pasos" class="section">
-                <h2>2. Primeros Pasos</h2>
-                
-                <div class="card">
-                    <h3>2.1. Requisitos del sistema</h3>
-                    <ul>
-                        <li>Navegadores web compatibles (Chrome, Firefox, Safari, Edge - últimas versiones).</li>
-                        <li>Conexión a internet estable.</li>
-                        <li>El sistema está optimizado para un funcionamiento óptimo de hasta 20 usuarios conectados de forma simultánea.</li>
-                    </ul>
+              </li>
+            </ol>
+          </div>
+
+          <div class="screenshot-container">
+            <img
+              src="./12.png"
+              alt="Formulario de creación de alumno"
+              class="screenshot"
+            />
+            <div class="screenshot-caption">
+              Figura 10: Formulario de alta de alumno
+            </div>
+          </div>
+
+          <div class="procedure">
+            <ol start="4">
+              <li>
+                <div class="procedure-step">
+                  <strong>Completar datos personales</strong><br />
+                  Complete todos los campos obligatorios (*):
+                  <ul>
+                    <li><strong>DNI:</strong> Número de documento</li>
+                    <li>
+                      <strong>Nombre y Apellido:</strong> Nombre completo del
+                      alumno
+                    </li>
+                    <li><strong>Fecha de Nacimiento:</strong> DD/MM/AAAA</li>
+                    <li>
+                      <strong>Lugar de Nacimiento:</strong> Ciudad, Provincia
+                    </li>
+                    <li><strong>Domicilio:</strong> Dirección completa</li>
+                    <li><strong>Email:</strong> Correo electrónico</li>
+                    <li><strong>Teléfono:</strong> Número de contacto</li>
+                  </ul>
                 </div>
-                
-                <div class="card">
-                    <h3>2.2. Acceso al Sistema</h3>
-                    <p><strong>Cómo acceder:</strong> Ingrese la URL provista por el instituto en su navegador. (ej. <code>https://instituto-cgs.sistema.com</code>)</p>
-                    
-                    <h4>Iniciar Sesión:</h4>
-                    <div class="procedure">
-                        <ol>
-                            <li>Recibirá sus credenciales (usuario y contraseña) por parte de la administración del instituto.</li>
-                            <li>Ingrese a la URL provista en su navegador.</li>
-                            <li>Introduzca su <strong>Usuario</strong> y <strong>Contraseña</strong>.</li>
-                            <li>Haga clic en <strong>"INICIAR SESIÓN"</strong>.</li>
-                        </ol>
-                    </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Datos académicos</strong><br />
+                  Seleccione o complete:
+                  <ul>
+                    <li>
+                      <strong>Fecha de Inscripción:</strong> Fecha de registro
+                    </li>
+                    <li><strong>Estado:</strong> Activo/Inactivo</li>
+                    <li>
+                      <strong>Curso:</strong> Asignar a curso correspondiente
+                    </li>
+                    <li><strong>Año lectivo:</strong> Período académico</li>
+                  </ul>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Datos del Tutor</strong><br />
+                  Complete la información del tutor/responsable:
+                  <ul>
+                    <li><strong>Nombre y Apellido del Tutor</strong></li>
+                    <li><strong>DNI del Tutor</strong></li>
+                    <li><strong>Parentesco:</strong> Madre, Padre, Tutor</li>
+                    <li><strong>Teléfono de contacto</strong></li>
+                    <li><strong>Email del tutor</strong></li>
+                  </ul>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step success">
+                  <strong>Guardar registro</strong><br />
+                  Haga clic en <strong>"Guardar"</strong> para finalizar el
+                  proceso
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="card warning">
+            <h3>💡 Consejos Importantes</h3>
+            <ul>
+              <li>Verifique que el DNI no esté duplicado en el sistema</li>
+              <li>Complete todos los campos marcados como obligatorios (*)</li>
+              <li>
+                Guarde la información del tutor para futuras comunicaciones
+              </li>
+              <li>Revise los datos antes de guardar</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 4.2 Procedimiento Crear Año Lectivo -->
+        <section id="proc-anioLectivo" class="section">
+          <h2>4.2. Procedimiento: Crear Año Lectivo</h2>
+          <div class="card danger">
+            <h3>⚠️ Solo para Personal Autorizado</h3>
+            <p>
+              Este procedimiento solo puede ser realizado por usuarios con
+              permisos de administración.
+            </p>
+          </div>
+
+          <div class="procedure">
+            <h3>Paso a Paso - Creación de Año Lectivo</h3>
+            <ol>
+              <li>
+                <div class="procedure-step">
+                  <strong>Acceder a Gestión de Datos</strong><br />
+                  Desde el Dashboard, haga clic en
+                  <strong>"Gestion de datos"</strong>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Seleccionar Año Lectivo</strong><br />
+                  Haga clic en la tarjeta <strong>"Año Lectivo"</strong>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Iniciar creación</strong><br />
+                  Haga clic en el botón <strong>"+ Nuevo Año Lectivo"</strong>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="screenshot-container">
+            <img
+              src="./gestiondeanioslectivos.png"
+              alt="vista de anios"
+              class="screenshot"
+            />
+            <div class="screenshot-caption">
+              Figura 11: Vista de años lectivos
+            </div>
+          </div>
+                    <div class="screenshot-container">
+            <img
+              src="./crearaniiolect+.png"
+              alt="vista de anios"
+              class="screenshot"
+            />
+            <div class="screenshot-caption">
+              Figura 12: Crear el nuevo año lectivo
+            </div>
+          </div>
+
+          <div class="procedure">
+            <ol start="4">
+              <li>
+                <div class="procedure-step">
+                  <strong>Completar datos del año lectivo</strong><br />
+                  Complete los campos obligatorios:
+                  <ul>
+                    <li><strong>Año *:</strong> Ej: 2025</li>
+                    <li><strong>Fecha de Inicio *:</strong> DD/MM/AAAA</li>
+                    <li><strong>Fecha de Fin *:</strong> DD/MM/AAAA</li>
+                    <li>
+                      <strong>Estado:</strong> Planificación, Activo, Finalizado
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step success">
+                  <strong>Guardar año lectivo</strong><br />
+                  Haga clic en <strong>"Guardar"</strong> para crear el año
+                  lectivo
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="card warning">
+            <h3>💡 Información Importante</h3>
+            <ul>
+              <li>
+                El año lectivo debe crearse antes de configurar cursos y
+                materias
+              </li>
+              <li>
+                Verifique que las fechas no se solapen con otros años lectivos
+              </li>
+              <li>
+                El estado "Activo" permite realizar operaciones en ese período
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 4.3 Procedimiento Crear Curso -->
+        <section id="proc-curso" class="section">
+          <h2>4.3. Procedimiento: Crear Curso</h2>
+          <div class="card danger">
+            <h3>⚠️ Solo para Personal Autorizado</h3>
+            <p>
+              Este procedimiento solo puede ser realizado por usuarios con
+              permisos de administración.
+            </p>
+          </div>
+
+          <div class="procedure">
+            <h3>Paso a Paso - Creación de Curso</h3>
+            <ol>
+              <li>
+                <div class="procedure-step">
+                  <strong>Acceder a Gestión de Datos</strong><br />
+                  Desde el Dashboard, haga clic en
+                  <strong>"Gestion de datos"</strong>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Seleccionar Cursos</strong><br />
+                  Haga clic en la tarjeta <strong>"Cursos"</strong>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Iniciar creación</strong><br />
+                  Haga clic en el botón <strong>"+ Nuevo Curso"</strong>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="screenshot-container">
+            <img
+              src="./gestioncursosver.png"
+              alt="Formulario de creación de curso"
+              class="screenshot"
+            />
+            <div class="screenshot-caption">
+              Figura 12: Visualizar los cursos: editarlos o eliminarlos
+            </div>
+          </div>
 
                     <div class="screenshot-container">
-                        <img src="./img/login.jpeg" alt="Pantalla de inicio de sesión" class="screenshot">
-                        <div class="screenshot-caption">Figura 2: Pantalla de Login del SGA</div>
-                    </div>
+            <img
+              src="./modallcrearcurso.png"
+              alt="Formulario de creación de curso"
+              class="screenshot"
+            />
+            <div class="screenshot-caption">
+              Figura 12: Agregar un nuevo curso
+            </div>
+          </div>
+
+          <div class="procedure">
+            <ol start="4">
+              <li>
+                <div class="procedure-step">
+                  <strong>Completar datos del curso</strong><br />
+                  Complete los campos obligatorios:
+                  <ul>
+                    <li><strong>Nombre *:</strong> Ej: "Primero A"</li>
+                    <li><strong>Año *:</strong> Nivel (1, 2, 3, etc.)</li>
+                    <li><strong>División *:</strong> Letra (A, B, C, etc.)</li>
+                    <li><strong>Turno *:</strong> Mañana, Tarde</li>
+                    <li><strong>Estado:</strong> Activo, Inactivo</li>
+                  </ul>
                 </div>
+              </li>
+              <li>
+                <div class="procedure-step success">
+                  <strong>Guardar curso</strong><br />
+                  Haga clic en <strong>"Guardar"</strong> para crear el curso
+                </div>
+              </li>
+            </ol>
+          </div>
 
-                <div class="card warning">
-                    <h3>2.3. Recuperar Contraseña</h3>
-                    <p>Si olvidó su contraseña, siga estos pasos:</p>
-                    <div class="procedure">
-                        <ol>
-                            <li>En la pantalla de login, haga clic en <strong>"¿Olvidó su contraseña?"</strong></li>
-                            <li>Ingrese su email institucional registrado</li>
-                            <li>Revise su correo y siga las instrucciones del email recibido</li>
-                            <li>Establezca una nueva contraseña</li>
-                            <li>Si no recibe el email, contacte a la administración</li>
-                        </ol>
-                    </div>
+          <div class="card warning">
+            <h3>💡 Configuración Adicional</h3>
+            <ul>
+              <li>
+                Después de crear el curso, debe asignarle las materias
+                correspondientes
+              </li>
+              <li>
+                El curso debe estar en estado "Activo" para poder asignar
+                alumnos
+              </li>
+              <li>
+                Verifique que no exista un curso con el mismo nombre y división
+              </li>
+            </ul>
+          </div>
+        </section>
 
+        <!-- 4.4 Procedimiento Crear Materia -->
+        <section id="proc-materia" class="section">
+          <h2>4.4. Procedimiento: Crear Materia</h2>
+          <div class="card danger">
+            <h3>⚠️ Solo para Personal Autorizado</h3>
+            <p>
+              Este procedimiento solo puede ser realizado por usuarios con
+              permisos de administración.
+            </p>
+          </div>
+
+          <div class="procedure">
+            <h3>Paso a Paso - Creación de Materia</h3>
+            <ol>
+              <li>
+                <div class="procedure-step">
+                  <strong>Acceder a Gestión de Datos</strong><br />
+                  Desde el Dashboard, haga clic en
+                  <strong>"Gestion de datos"</strong>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Seleccionar Materias</strong><br />
+                  Haga clic en la tarjeta <strong>"Materias"</strong>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Iniciar creación</strong><br />
+                  Haga clic en el botón <strong>"+ Nueva Materia"</strong>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="screenshot-container">
+            <img
+              src="./6.png"
+              alt="Formulario de creación de materia"
+              class="screenshot"
+            />
+            <div class="screenshot-caption">
+              Figura 13: Formulario de creación de materia
+            </div>
+          </div>
+
+          <div class="screenshot-container">
+            <img
+              src="./forMateria.png"
+              alt="Formulario de creación de materia"
+              class="screenshot"
+            />
+            <div class="screenshot-caption">
+              Figura 13: Formulario de creación de materia
+            </div>
+          </div>
+
+          <div class="procedure">
+            <ol start="4">
+              <li>
+                <div class="procedure-step">
+                  <strong>Completar datos de la materia</strong><br />
+                  Complete los campos obligatorios:
+                  <ul>
+                    <li><strong>Nombre *:</strong> Ej: "Matemática I"</li>
+                    <li><strong>Nivel (Año) *:</strong> 1°, 2°, 3°, etc.</li>
+                    <li><strong>Ciclo:</strong> Básico, Orientado</li>
+                    <li><strong>Carga Horaria:</strong> Horas semanales</li>
+                  </ul>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step success">
+                  <strong>Guardar materia</strong><br />
+                  Haga clic en <strong>"Guardar"</strong> para crear la materia
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="card warning">
+            <h3>💡 Consideraciones</h3>
+            <ul>
+              <li>
+                Las materias deben crearse antes de asignarlas a los cursos
+              </li>
+              <li>
+                El nivel debe coincidir con el año del curso al que se asignará
+              </li>
+              <li>
+                Verifique que no exista una materia con el mismo nombre y nivel
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 4.5 Procedimiento Asignar Materia a Curso -->
+        <section id="proc-asignacionMateria" class="section">
+          <h2>4.5. Procedimiento: Asignar Materia a Curso</h2>
+          <div class="card danger">
+            <h3>⚠️ Solo para Personal Autorizado</h3>
+            <p>
+              Este procedimiento solo puede ser realizado por usuarios con
+              permisos de administración.
+            </p>
+          </div>
+
+          <div class="procedure">
+            <h3>Paso a Paso - Asignación de Materias</h3>
+            <ol>
+              <li>
+                <div class="procedure-step">
+                  <strong>Acceder a Gestión de Datos</strong><br />
+                  Desde el Dashboard, haga clic en
+                  <strong>"Gestion de datos"</strong>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Seleccionar Planes de Estudio</strong><br />
+                  Haga clic en la tarjeta
+                  <strong>"Asignación Materia-Curso"</strong>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Seleccionar curso</strong><br />
+                  En "Seleccionar Curso", elija el curso al que asignará
+                  materias
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="screenshot-container">
+            <img
+              src="./8.png"
+              alt="Pantalla de asignación de materias a curso"
+              class="screenshot"
+            />
+            <div class="screenshot-caption">
+              Figura 14: Pantalla de asignación de materias a curso
+            </div>
+          </div>
+
+          <div class="procedure">
+            <ol start="4">
+              <li>
+                <div class="procedure-step">
+                  <strong>Asignar materias</strong><br />
+                  Marque las casillas de las materias que corresponden al curso:
+                  <ul>
+                    <li>Biología I</li>
+                    <li>Geografía I</li>
+                    <li>Historia I</li>
+                    <li>Lengua y Literatura I</li>
+                    <li>Matemática I</li>
+                    <li>Etc.</li>
+                  </ul>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step success">
+                  <strong>Guardar cambios</strong><br />
+                  Haga clic en <strong>"Guardar Cambios"</strong> para confirmar
+                  la asignación
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="card warning">
+            <h3>💡 Plan de Estudios</h3>
+            <ul>
+              <li>Esta asignación define el plan de estudios del curso</li>
+              <li>
+                Los docentes solo podrán cargar notas para las materias
+                asignadas
+              </li>
+              <li>Los alumnos verán solo las materias asignadas a su curso</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 4.6 Procedimiento Crear Docente -->
+        <section id="proc-docente" class="section">
+          <h2>4.6. Procedimiento: Crear Docente</h2>
+          <div class="card danger">
+            <h3>⚠️ Solo para Personal Autorizado</h3>
+            <p>
+              Este procedimiento solo puede ser realizado por usuarios con
+              permisos de administración.
+            </p>
+          </div>
+
+          <div class="procedure">
+            <h3>Paso a Paso - Alta de Docente</h3>
+            <ol>
+              <li>
+                <div class="procedure-step">
+                  <strong>Acceder a Gestión de Datos</strong><br />
+                  Desde el Dashboard, haga clic en
+                  <strong>"Gestion de datos"</strong>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Seleccionar Docentes</strong><br />
+                  Haga clic en la tarjeta <strong>"Docentes"</strong>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Iniciar creación</strong><br />
+                  Haga clic en el botón <strong>"Agregar docente"</strong>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="screenshot-container">
+            <img
+              src="./altaDoce.png"
+              alt="Formulario de creación de docente"
+              class="screenshot"
+            />
+            <div class="screenshot-caption">
+              Figura 15: Formulario de alta de docente
+            </div>
+          </div>
+
+          <div class="procedure">
+            <ol start="4">
+              <li>
+                <div class="procedure-step">
+                  <strong>Completar datos personales</strong><br />
+                  Complete los campos obligatorios:
+                  <ul>
+                    <li><strong>DNI:</strong> Número de documento</li>
+                    <li><strong>Nombre:</strong> Nombre del docente</li>
+                    <li><strong>Apellido:</strong> Apellido del docente</li>
+                    <li>
+                      <strong>Teléfono:</strong> Número de contacto (opcional)
+                    </li>
+                    <li>
+                      <strong>Especialidad:</strong> Área de especialización
+                      (opcional)
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step success">
+                  <strong>Continuar y guardar</strong><br />
+                  Haga clic en <strong>"Siguiente"</strong> y complete el
+                  proceso de creación
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="card warning">
+            <h3>💡 Configuración del Docente</h3>
+            <ul>
+              <li>
+                Después de crear el docente, debe asignarle las materias que
+                dictará
+              </li>
+              <li>El docente recibirá credenciales de acceso al sistema</li>
+              <li>Verifique que el DNI no esté duplicado en el sistema</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 4.7 Procedimiento Cargar Notas -->
+        <section id="proc-notas" class="section">
+          <h2>4.7. Procedimiento: Cargar Calificaciones</h2>
+          <div class="card info">
+            <h3>👨‍🏫 Para Docentes y Autoridades</h3>
+            <p>
+              Este procedimiento puede ser realizado por docentes para sus
+              materias asignadas.
+            </p>
+          </div>
+
+          <div class="procedure">
+            <h3>Paso a Paso - Carga de Notas</h3>
+            <ol>
+              <li>
+                <div class="procedure-step">
+                  <strong>Acceder a Consulta por Curso</strong><br />
+                  Desde la pantalla principal, seleccione
+                  <strong>"Consulta por Curso"</strong>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Seleccionar curso y materia</strong><br />
+                  Complete los filtros de búsqueda:
+                  <ul>
+                    <li><strong>Curso:</strong> Seleccione el curso</li>
+                    <li><strong>Materia:</strong> Elija su materia</li>
+                    <li>
+                      <strong>Período:</strong> Cuatrimestre correspondiente
+                    </li>
+                    <li><strong>Año:</strong> Año lectivo</li>
+                  </ul>
+                  Haga clic en <strong>"Buscar Curso"</strong>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Acceder a carga de calificaciones</strong><br />
+                  En el Perfil del Curso, haga clic en
+                  <strong>"Carga de Calificaciones"</strong>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="screenshot-container">
+            <img
+              src="./13.png"
+              alt="Pantalla de carga de calificaciones"
+              class="screenshot"
+            />
+            <div class="screenshot-caption">
+              Figura 16: Pantalla de carga de calificaciones
+            </div>
+          </div>
+
+          <div class="procedure">
+            <ol start="4">
+              <li>
+                <div class="procedure-step">
+                  <strong>Ingresar las notas</strong><br />
+                  Para cada alumno en la lista:
+                  <ul>
+                    <li>
+                      Ingrese la nota en la columna correspondiente (Nota 1,
+                      Nota 2, Nota 3)
+                    </li>
+                    <li>El sistema calcula automáticamente el promedio</li>
+                    <li>
+                      Puede ingresar nota de
+                      <strong>Período Complementario</strong> si aplica
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Guardar las calificaciones</strong><br />
+                  Para cada alumno, haga clic en el icono de
+                  <strong>✓ (check)</strong> en la columna "Acción"
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step success">
+                  <strong>Verificar cambios</strong><br />
+                  Confirme que los promedios y estados se actualizaron
+                  correctamente
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="card warning">
+            <h3>📊 Escala de Calificaciones</h3>
+            <ul>
+              <li><strong>1-10:</strong> Escala numérica</li>
+              <li><strong>≥ 6:</strong> Aprobado</li>
+              <li><strong>< 6:</strong> Desaprobado</li>
+              <li><strong>Promedio:</strong> Calculado automáticamente</li>
+              <li><strong>Estado:</strong> Se actualiza según las notas</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 4.8 Procedimiento Cargar Asistencia -->
+        <section id="proc-asistencia" class="section">
+          <h2>4.8. Procedimiento: Cargar Asistencia</h2>
+          <div class="card info">
+            <h3>👨‍🏫 Para Docentes y Autoridades</h3>
+            <p>Registro diario de presencia y ausencia de alumnos.</p>
+          </div>
+
+          <div class="procedure">
+            <h3>Paso a Paso - Carga de Asistencia</h3>
+            <ol>
+              <li>
+                <div class="procedure-step">
+                  <strong>Acceder a Consulta por Curso</strong><br />
+                  Desde la pantalla principal, seleccione
+                  <strong>"Consulta por Curso"</strong>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Seleccionar curso</strong><br />
+                  Complete los filtros:
+                  <ul>
+                    <li><strong>Curso, Materia, Período, Año</strong></li>
+                  </ul>
+                  Haga clic en <strong>"Buscar Curso"</strong>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Acceder a carga de asistencia</strong><br />
+                  En el Perfil del Curso, haga clic en
+                  <strong>"Carga de Asistencia"</strong>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="screenshot-container">
+            <img
+              src="./14.png"
+              alt="Pantalla de carga de asistencia"
+              class="screenshot"
+            />
+            <div class="screenshot-caption">
+              Figura 17: Pantalla de carga de asistencia con botones P/A
+            </div>
+          </div>
+
+          <div class="procedure">
+            <ol start="4">
+              <li>
+                <div class="procedure-step">
+                  <strong>Seleccionar fecha</strong><br />
+                  Elija la fecha de la clase usando el selector de fecha
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Registrar asistencia</strong><br />
+                  Para cada alumno en la lista:
+                  <ul>
+                    <li>
+                      Haga clic en <strong>🟢 "P"</strong> para
+                      <strong>Presente</strong>
+                    </li>
+                    <li>
+                      Haga clic en <strong>🔴 "A"</strong> para
+                      <strong>Ausente</strong>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step success">
+                  <strong>Guardar automáticamente</strong><br />
+                  El sistema guarda los cambios inmediatamente. No necesita
+                  hacer clic en "Guardar"
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="card warning">
+            <h3>💡 Tips para la Asistencia</h3>
+            <ul>
+              <li>
+                La asistencia se guarda automáticamente al hacer clic en P/A
+              </li>
+              <li>Puede cargar asistencia para días anteriores</li>
+              <li>
+                El sistema calcula automáticamente los porcentajes de asistencia
+              </li>
+              <li>Revise el resumen de asistencias para ver estadísticas</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 4.9 Procedimiento Comunicación -->
+        <section id="proc-comunicacion" class="section">
+          <h2>4.9. Procedimiento: Enviar Comunicación a Tutores</h2>
+
+          <div class="procedure">
+            <h3>Paso a Paso - Envío de Comunicaciones</h3>
+            <ol>
+              <li>
+                <div class="procedure-step">
+                  <strong>Seleccionar método de acceso</strong><br />
+                  Acceda desde:
+                  <ul>
+                    <li>
+                      <strong>Individual:</strong> "Consulta por Alumno" →
+                      "Perfil de Alumno" → <strong>"Generar Mail"</strong>
+                    </li>
                     <div class="screenshot-container">
-                        <img src="./img/recuPass1.jpeg" alt="Pantalla de recuperación de contraseña" class="screenshot">
-                        <div class="screenshot-caption">Figura 3: Recuperación de contraseña</div>
+                      <img
+                        src="./generalmailindi.png"
+                        alt="Pantalla de general mail alumno indivudual"
+                        class="screenshot"
+                      />
+                      <div class="screenshot-caption">
+                        Enviar mail por alumno individual
+                      </div>
                     </div>
+                    <li>
+                      <strong>Grupal:</strong> "Consulta por Curso" → "Perfil
+                      del Curso" → <strong>"Comunicación Grupal"</strong>
+                    </li>
+                                        <div class="screenshot-container">
+                      <img
+                        src="./comunicaciongrupal.png"
+                        alt="Pantalla de comunicacion grupal"
+                        class="screenshot"
+                      />
+                      <div class="screenshot-caption">
+                        Enviar mail por curso 
+                      </div>
+                    </div>
+                  </ul>
+                  <ul>
+                    <li><strong>Grupal:</strong> "Consulta por Curso" → "Perfil
+                      del Curso" → <strong>"Comunicación Grupal" → </strong>enviar mail a tutor de alumno seleccionado</li>
                     <div class="screenshot-container">
-                        <img src="./img/correoRecu.jpeg" alt="Pantalla de recuperación de contraseña" class="screenshot">
-                        <div class="screenshot-caption">Figura 4: Mail de Recuperación de contraseña</div>
+                      <img
+                        src="./ENVIARMAILCOMGRUPAL.png"
+                        alt="enviar mail com grupal boton"
+                        class="screenshot"
+                      />
+                      <div class="screenshot-caption">
+                        Enviar mail al tutor del alumno seleccionado
+
+                      </div>
                     </div>
+                    </ul>
+                </div>
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Configurar filtros de destino en enviar email general</strong><br />
+                                      <div class="screenshot-container">
+                      <img
+                        src="./EMAIL GENERAL.png"
+                        alt="..
+                        "
+                        class="screenshot"
+                      />
+                      <div class="screenshot-caption">
+                        Enviar mail general (por alumno o curso)
+                      </div>
+                    </div>
+                  Complete:
+                  <ul>
+                    <li><strong>Año Lectivo:</strong> Seleccione el año</li>
+                    <li>
+                      <strong>Tipo de Destinatario:</strong> Alumno Individual o
+                      Cursos Completos
+                    </li>
+                    <li><strong>Filtro por Curso:</strong> Si aplica</li>
+                  </ul>
                     <div class="screenshot-container">
-                        <img src="./img/CambioPass.jpeg" alt="Pantalla de recuperación de contraseña" class="screenshot">
-                        <div class="screenshot-caption">Figura 5: Cambio de contraseña</div>
+                      <img
+                        src="./email general filtros por anio.png"
+                        alt="filtros enmail general"
+                        class="screenshot"
+                      />
+                      <div class="screenshot-caption">
+                        Enviar mail por curso completo 
+                      </div>
+                    </div>
+                                        <div class="screenshot-container">
+                      <img
+                        src="./email general filtros por curso y alumnos.png"
+                        alt="Pantalla de cemail general cursos y alumnos check"
+                        class="screenshot"
+                      />
+                      <div class="screenshot-caption">
+                        Enviar mail por curso y alumno individual
+                      </div>
                     </div>
                 </div>
-            </section>
-            
-            <!-- 3. Interfaz Section -->
-            <section id="interfaz" class="section">
-                <h2>3. Recorrido por la Interfaz</h2>
-                <p>La navegación principal del sistema se centra en la pantalla "Consulta Académica", que es la primera pantalla que verá después de iniciar sesión.</p>
-                
-                <div class="screenshot-container">
-                    <img src="./1.png" alt="Pantalla de Consulta Académica" class="screenshot">
-                    <div class="screenshot-caption">Figura 6: Pantalla principal - Consulta Académica</div>
-                </div>
-
-                <div class="card">
-                    <h3>Barra de Navegación Superior</h3>
-                    <ul>
-                        <li><strong>Principal:</strong> Lo lleva de regreso a la pantalla "Consulta Académica".</li>
-                        <li><strong>Cerrar Sesión:</strong> Cierra su sesión y lo regresa a la pantalla de login.</li>
-                    </ul>
-                </div>
-                
-                <div class="card">
-                    <h3>Pantalla "Consulta Académica"</h3>
-                    <p>Esta pantalla le ofrece cuatro formas principales de navegar por el sistema:</p>
-                    <ol>
-                        <li><strong>Consulta por Alumno:</strong> Le permite buscar un alumno específico (generalmente por DNI y Año) para acceder a su perfil individual.</li>
-                        <li><strong>Consulta por Curso:</strong> Le permite buscar un curso/materia específico para ver listados de clase y realizar acciones grupales (como cargar notas o asistencias).</li>
-                        <li><strong>Envio de Email:</strong> Le permite el envio de mails por un curso/materia específico</li>
-                        <li><strong>Gestion de datos:</strong> Le permite realizar las altas de ALUMNOS | DOCENTES | AÑO LECTIVO | MATERIAS | CURSOS | ASIGANCION DE CURSOS .</li>
-                    </ol>
-                </div>
-
-                <div class="card">
-                    <h3>Dashboard de Gestión Datos</h3>
-                    <p>Para usuarios con permisos de administración, existe un dashboard central que permite acceder rápidamente a todas las funciones del sistema:</p>
-                    <ul>
-                        <li><strong>Año Lectivo:</strong> Configuración de períodos académicos</li>
-                        <li><strong>Docentes:</strong> Gestión del personal docente</li>
-                        <li><strong>Alumnos:</strong> Administración de estudiantes</li>
-                        <li><strong>Cursos:</strong> Creación y configuración de cursos</li>
-                        <li><strong>Materias:</strong> Catálogo de asignaturas</li>
-                        <li><strong>Asignación Materia-Curso:</strong> Planes de estudio</li>
-                    </ul>
-
+              </li>
+              <li>
+                <div class="procedure-step">
+                  <strong>Completar la comunicación</strong><br />
+                  Ingrese:
+                  <ul>
+                    <li>
+                      <strong>Tipo de Comunicación:</strong> Notificación
+                      General, Aviso, etc.
+                    </li>
+                    <li><strong>Asunto *:</strong> Título del mensaje</li>
+                    <li>
+                      <strong>Mensaje / Observaciones *:</strong> Contenido del
+                      correo
+                    </li>
+                  </ul>
                     <div class="screenshot-container">
-                        <img src="./gestion de datos.png" alt="Dashboard de Gestión Académica" class="screenshot">
-                        <div class="screenshot-caption">Figura 7: Dashboard de Gestión Datos (solo autoridades)</div>
+                      <img
+                        src="./tipo de comunicacion emailgeneral.png"
+                        alt="Pantalla de motivo de reunion mailgeneral"
+                        class="screenshot"
+                      />
+                      <div class="screenshot-caption">
+                        Completar motivo de comunicacion  
+                      </div>
                     </div>
                 </div>
-
-                <div class="card">
-                    <h3>Perfil de Alumno</h3>
-                    <p>Al consultar por un alumno, accederá a su perfil, donde verá las "Acciones Disponibles" para <em>ese</em> alumno, tales como:</p>
-                    <ul>
-                        <li>Info Alumno</li>
-                        <li>Ver Asistencias</li>
-                        <li>Estado Académico</li>
-                        <li>Historial de Comunicaciones</li>
-                        <li>Certificados y Actas</li>
-                        <li>Generar Mail</li>
-                    </ul>
-
+              </li>
+              <li>
+                <div class="procedure-step success">
+                  <strong>Enviar comunicación</strong><br />
+                  Haga clic en <strong>"Enviar Mail"</strong> para enviar a los
+                  tutores de los alumnos seleccionados
+                </div>
+              </li>
                     <div class="screenshot-container">
-                        <img src="./img/menu alumno.jpeg" alt="Perfil de Alumno" class="screenshot">
-                        <div class="screenshot-caption">Figura 8: Perfil individual de alumno con acciones disponibles</div>
+                      <img
+                        src="./enviar mail masivo general.png"
+                        alt="Pantalla de carga de asistencia"
+                        class="screenshot"
+                      />
+                      <div class="screenshot-caption">
+                        Enviar mail por curso completo 
+                      </div>
                     </div>
+            </ol>
+          </div>
+
+          <div class="card warning">
+            <h3>📧 Tipos de Comunicación</h3>
+            <ul>
+              <li>
+                <strong>Notificación General:</strong> Comunicados informativos
+              </li>
+              <li><strong>Aviso de Asistencia:</strong> Alertas por faltas</li>
+              <li>
+                <strong>Notas Bajas:</strong> Comunicación sobre rendimiento
+              </li>
+              <li><strong>Eventos:</strong> Información sobre actividades</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 4.10 Procedimiento Certificados -->
+        <section id="proc-certificados" class="section">
+          <h2>4.10. Procedimiento: Generar Certificados y Documentos</h2>
+
+          <div class="procedure">
+            <h3>Paso a Paso - Generación de Certificados</h3>
+            <ol>
+              <li>
+                <div class="procedure-step">
+                  <strong>Acceder a perfil del alumno</strong><br />
+                  Desde "Consulta Académica", seleccione
+                  <strong>"Consulta por Alumno"</strong><br />
+                  Busque al alumno por DNI y Año
                 </div>
-
-                <div class="card">
-                    <h3>Perfil del Curso</h3>
-                    <p>Al consultar por un curso, accederá a su perfil, donde verá las "Acciones Disponibles" para <em>esa</em> clase, tales como:</p>
-                    <ul>
-                        <li>Ver Listado de Alumnos</li>
-                        <li>Resumen de Calificaciones</li>
-                        <li>Resumen de Asistencias</li>
-                        <li>Carga de Calificaciones</li>
-                        <li>Carga de Asistencia</li>
-                        <li>Comunicación Grupal</li>
-                    </ul>
-
+              </li>
                     <div class="screenshot-container">
-                        <img src="./img/menu curso.jpeg" alt="Perfil de Curso" class="screenshot">
-                        <div class="screenshot-caption">Figura 9: Perfil de curso con acciones grupales</div>
+                      <img
+                        src="./HOMEALUMNODNI.png"
+                        alt="Pantalla de carga de asistencia"
+                        class="screenshot"
+                      />
+                      <div class="screenshot-caption">
+                        Consultar alumno por dni
+                      </div>
                     </div>
+              <li>
+                <div class="procedure-step">
+                  <strong>Acceder a certificados</strong><br />
+                  En el Perfil del Alumno, haga clic en
+                  <strong>"Certificados y Actas"</strong>
                 </div>
-            </section>
-
-            <!-- 4. Procedimientos Section -->
-            <section id="procedimientos" class="section">
-                <h2>4. Procedimientos Paso a Paso</h2>
-                <p>En esta sección encontrará instrucciones detalladas para realizar las tareas más comunes en el sistema.</p>
-                
-                <div class="card info">
-                    <h3>📝 Seleccione un procedimiento específico del menú lateral</h3>
-                    <p>Use el menú de navegación a la izquierda para acceder a procedimientos detallados de:</p>
-                    <ul>
-                        <li><strong>Crear Alumno:</strong> Alta de nuevos estudiantes en el sistema</li>
-                        <li><strong>Crear Año Lectivo:</strong> Configuración de períodos académicos</li>
-                        <li><strong>Crear Curso:</strong> Configuración de cursos</li>
-                        <li><strong>Crear Materia:</strong> Gestión de asignaturas</li>
-                        <li><strong>Asignar Materia a Curso:</strong> Planes de estudio</li>
-                        <li><strong>Crear Docente:</strong> Gestión de personal docente</li>
-                        <li><strong>Cargar Notas:</strong> Registro de calificaciones</li>
-                        <li><strong>Cargar Asistencia:</strong> Control de presencia/ausencia</li>
-                        <li><strong>Enviar Comunicación:</strong> Contacto con tutores</li>
-                        <li><strong>Generar Certificados:</strong> Documentación oficial</li>
-                    </ul>
-                </div>
-            </section>
-
-            <!-- 4.1 Procedimiento Crear Alumno -->
-            <section id="proc-alumno" class="section">
-                <h2>4.1. Procedimiento: Crear un Nuevo Alumno</h2>
-                <div class="card danger">
-                    <h3>⚠️ Solo para Personal Autorizado</h3>
-                    <p>Este procedimiento solo puede ser realizado por usuarios con permisos de administración.</p>
-                </div>
-
-                <div class="procedure">
-                    <h3>Paso a Paso - Alta de Alumno</h3>
-                    <ol>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Desde el menu de Consulta Academica</strong><br>
-                                Desde el Dashboard de Consulta Académica, haga clic en <strong>"Gestion de datos"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Iniciar creación de nuevo alumno</strong><br>
-                                Haga clic en el botón Tarjeta <strong>"Alumno"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Click en boton de Agregar alumno</strong><br>
-                                Haga clic en el botón <strong>"+ Nuevo Alumno"</strong>
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="screenshot-container">
-                    <img src="./12.png" alt="Formulario de creación de alumno" class="screenshot">
-                    <div class="screenshot-caption">Figura 10: Formulario de alta de alumno</div>
-                </div>
-
-                <div class="procedure">
-                    <ol start="4">
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Completar datos personales</strong><br>
-                                Complete todos los campos obligatorios (*):
-                                <ul>
-                                    <li><strong>DNI:</strong> Número de documento</li>
-                                    <li><strong>Nombre y Apellido:</strong> Nombre completo del alumno</li>
-                                    <li><strong>Fecha de Nacimiento:</strong> DD/MM/AAAA</li>
-                                    <li><strong>Lugar de Nacimiento:</strong> Ciudad, Provincia</li>
-                                    <li><strong>Domicilio:</strong> Dirección completa</li>
-                                    <li><strong>Email:</strong> Correo electrónico</li>
-                                    <li><strong>Teléfono:</strong> Número de contacto</li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Datos académicos</strong><br>
-                                Seleccione o complete:
-                                <ul>
-                                    <li><strong>Fecha de Inscripción:</strong> Fecha de registro</li>
-                                    <li><strong>Estado:</strong> Activo/Inactivo</li>
-                                    <li><strong>Curso:</strong> Asignar a curso correspondiente</li>
-                                    <li><strong>Año lectivo:</strong> Período académico</li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Datos del Tutor</strong><br>
-                                Complete la información del tutor/responsable:
-                                <ul>
-                                    <li><strong>Nombre y Apellido del Tutor</strong></li>
-                                    <li><strong>DNI del Tutor</strong></li>
-                                    <li><strong>Parentesco:</strong> Madre, Padre, Tutor</li>
-                                    <li><strong>Teléfono de contacto</strong></li>
-                                    <li><strong>Email del tutor</strong></li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step success">
-                                <strong>Guardar registro</strong><br>
-                                Haga clic en <strong>"Guardar"</strong> para finalizar el proceso
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="card warning">
-                    <h3>💡 Consejos Importantes</h3>
-                    <ul>
-                        <li>Verifique que el DNI no esté duplicado en el sistema</li>
-                        <li>Complete todos los campos marcados como obligatorios (*)</li>
-                        <li>Guarde la información del tutor para futuras comunicaciones</li>
-                        <li>Revise los datos antes de guardar</li>
-                    </ul>
-                </div>
-            </section>
-
-            <!-- 4.2 Procedimiento Crear Año Lectivo -->
-            <section id="proc-anioLectivo" class="section">
-                <h2>4.2. Procedimiento: Crear Año Lectivo</h2>
-                <div class="card danger">
-                    <h3>⚠️ Solo para Personal Autorizado</h3>
-                    <p>Este procedimiento solo puede ser realizado por usuarios con permisos de administración.</p>
-                </div>
-
-                <div class="procedure">
-                    <h3>Paso a Paso - Creación de Año Lectivo</h3>
-                    <ol>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Acceder a Gestión de Datos</strong><br>
-                                Desde el Dashboard, haga clic en <strong>"Gestion de datos"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Seleccionar Año Lectivo</strong><br>
-                                Haga clic en la tarjeta <strong>"Año Lectivo"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Iniciar creación</strong><br>
-                                Haga clic en el botón <strong>"+ Nuevo Año Lectivo"</strong>
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="screenshot-container">
-                    <img src="./4.png" alt="Formulario de creación de año lectivo" class="screenshot">
-                    <div class="screenshot-caption">Figura 11: Formulario de creación de año lectivo</div>
-                </div>
-
-                <div class="procedure">
-                    <ol start="4">
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Completar datos del año lectivo</strong><br>
-                                Complete los campos obligatorios:
-                                <ul>
-                                    <li><strong>Año *:</strong> Ej: 2025</li>
-                                    <li><strong>Fecha de Inicio *:</strong> DD/MM/AAAA</li>
-                                    <li><strong>Fecha de Fin *:</strong> DD/MM/AAAA</li>
-                                    <li><strong>Estado:</strong> Planificación, Activo, Finalizado</li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step success">
-                                <strong>Guardar año lectivo</strong><br>
-                                Haga clic en <strong>"Guardar"</strong> para crear el año lectivo
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="card warning">
-                    <h3>💡 Información Importante</h3>
-                    <ul>
-                        <li>El año lectivo debe crearse antes de configurar cursos y materias</li>
-                        <li>Verifique que las fechas no se solapen con otros años lectivos</li>
-                        <li>El estado "Activo" permite realizar operaciones en ese período</li>
-                    </ul>
-                </div>
-            </section>
-
-            <!-- 4.3 Procedimiento Crear Curso -->
-            <section id="proc-curso" class="section">
-                <h2>4.3. Procedimiento: Crear Curso</h2>
-                <div class="card danger">
-                    <h3>⚠️ Solo para Personal Autorizado</h3>
-                    <p>Este procedimiento solo puede ser realizado por usuarios con permisos de administración.</p>
-                </div>
-
-                <div class="procedure">
-                    <h3>Paso a Paso - Creación de Curso</h3>
-                    <ol>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Acceder a Gestión de Datos</strong><br>
-                                Desde el Dashboard, haga clic en <strong>"Gestion de datos"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Seleccionar Cursos</strong><br>
-                                Haga clic en la tarjeta <strong>"Cursos"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Iniciar creación</strong><br>
-                                Haga clic en el botón <strong>"+ Nuevo Curso"</strong>
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="screenshot-container">
-                    <img src="./5.png" alt="Formulario de creación de curso" class="screenshot">
-                    <div class="screenshot-caption">Figura 12: Formulario de creación de curso</div>
-                </div>
-
-                <div class="procedure">
-                    <ol start="4">
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Completar datos del curso</strong><br>
-                                Complete los campos obligatorios:
-                                <ul>
-                                    <li><strong>Nombre *:</strong> Ej: "Primero A"</li>
-                                    <li><strong>Año *:</strong> Nivel (1, 2, 3, etc.)</li>
-                                    <li><strong>División *:</strong> Letra (A, B, C, etc.)</li>
-                                    <li><strong>Turno *:</strong> Mañana, Tarde</li>
-                                    <li><strong>Estado:</strong> Activo, Inactivo</li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step success">
-                                <strong>Guardar curso</strong><br>
-                                Haga clic en <strong>"Guardar"</strong> para crear el curso
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="card warning">
-                    <h3>💡 Configuración Adicional</h3>
-                    <ul>
-                        <li>Después de crear el curso, debe asignarle las materias correspondientes</li>
-                        <li>El curso debe estar en estado "Activo" para poder asignar alumnos</li>
-                        <li>Verifique que no exista un curso con el mismo nombre y división</li>
-                    </ul>
-                </div>
-            </section>
-
-            <!-- 4.4 Procedimiento Crear Materia -->
-            <section id="proc-materia" class="section">
-                <h2>4.4. Procedimiento: Crear Materia</h2>
-                <div class="card danger">
-                    <h3>⚠️ Solo para Personal Autorizado</h3>
-                    <p>Este procedimiento solo puede ser realizado por usuarios con permisos de administración.</p>
-                </div>
-
-                <div class="procedure">
-                    <h3>Paso a Paso - Creación de Materia</h3>
-                    <ol>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Acceder a Gestión de Datos</strong><br>
-                                Desde el Dashboard, haga clic en <strong>"Gestion de datos"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Seleccionar Materias</strong><br>
-                                Haga clic en la tarjeta <strong>"Materias"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Iniciar creación</strong><br>
-                                Haga clic en el botón <strong>"+ Nueva Materia"</strong>
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="screenshot-container">
-                    <img src="./6.png" alt="Formulario de creación de materia" class="screenshot">
-                    <div class="screenshot-caption">Figura 13: Formulario de creación de materia</div>
-                </div>
-
-                <div class="procedure">
-                    <ol start="4">
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Completar datos de la materia</strong><br>
-                                Complete los campos obligatorios:
-                                <ul>
-                                    <li><strong>Nombre *:</strong> Ej: "Matemática I"</li>
-                                    <li><strong>Nivel (Año) *:</strong> 1°, 2°, 3°, etc.</li>
-                                    <li><strong>Ciclo:</strong> Básico, Orientado</li>
-                                    <li><strong>Carga Horaria:</strong> Horas semanales</li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step success">
-                                <strong>Guardar materia</strong><br>
-                                Haga clic en <strong>"Guardar"</strong> para crear la materia
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="card warning">
-                    <h3>💡 Consideraciones</h3>
-                    <ul>
-                        <li>Las materias deben crearse antes de asignarlas a los cursos</li>
-                        <li>El nivel debe coincidir con el año del curso al que se asignará</li>
-                        <li>Verifique que no exista una materia con el mismo nombre y nivel</li>
-                    </ul>
-                </div>
-            </section>
-
-            <!-- 4.5 Procedimiento Asignar Materia a Curso -->
-            <section id="proc-asignacionMateria" class="section">
-                <h2>4.5. Procedimiento: Asignar Materia a Curso</h2>
-                <div class="card danger">
-                    <h3>⚠️ Solo para Personal Autorizado</h3>
-                    <p>Este procedimiento solo puede ser realizado por usuarios con permisos de administración.</p>
-                </div>
-
-                <div class="procedure">
-                    <h3>Paso a Paso - Asignación de Materias</h3>
-                    <ol>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Acceder a Gestión de Datos</strong><br>
-                                Desde el Dashboard, haga clic en <strong>"Gestion de datos"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Seleccionar Planes de Estudio</strong><br>
-                                Haga clic en la tarjeta <strong>"Asignación Materia-Curso"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Seleccionar curso</strong><br>
-                                En "Seleccionar Curso", elija el curso al que asignará materias
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="screenshot-container">
-                    <img src="./8.png" alt="Pantalla de asignación de materias a curso" class="screenshot">
-                    <div class="screenshot-caption">Figura 14: Pantalla de asignación de materias a curso</div>
-                </div>
-
-                <div class="procedure">
-                    <ol start="4">
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Asignar materias</strong><br>
-                                Marque las casillas de las materias que corresponden al curso:
-                                <ul>
-                                    <li>Biología I</li>
-                                    <li>Geografía I</li>
-                                    <li>Historia I</li>
-                                    <li>Lengua y Literatura I</li>
-                                    <li>Matemática I</li>
-                                    <li>Etc.</li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step success">
-                                <strong>Guardar cambios</strong><br>
-                                Haga clic en <strong>"Guardar Cambios"</strong> para confirmar la asignación
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="card warning">
-                    <h3>💡 Plan de Estudios</h3>
-                    <ul>
-                        <li>Esta asignación define el plan de estudios del curso</li>
-                        <li>Los docentes solo podrán cargar notas para las materias asignadas</li>
-                        <li>Los alumnos verán solo las materias asignadas a su curso</li>
-                    </ul>
-                </div>
-            </section>
-
-            <!-- 4.6 Procedimiento Crear Docente -->
-            <section id="proc-docente" class="section">
-                <h2>4.6. Procedimiento: Crear Docente</h2>
-                <div class="card danger">
-                    <h3>⚠️ Solo para Personal Autorizado</h3>
-                    <p>Este procedimiento solo puede ser realizado por usuarios con permisos de administración.</p>
-                </div>
-
-                <div class="procedure">
-                    <h3>Paso a Paso - Alta de Docente</h3>
-                    <ol>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Acceder a Gestión de Datos</strong><br>
-                                Desde el Dashboard, haga clic en <strong>"Gestion de datos"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Seleccionar Docentes</strong><br>
-                                Haga clic en la tarjeta <strong>"Docentes"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Iniciar creación</strong><br>
-                                Haga clic en el botón <strong>"Agregar docente"</strong>
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="screenshot-container">
-                    <img src="./10.png" alt="Formulario de creación de docente" class="screenshot">
-                    <div class="screenshot-caption">Figura 15: Formulario de alta de docente</div>
-                </div>
-
-                <div class="procedure">
-                    <ol start="4">
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Completar datos personales</strong><br>
-                                Complete los campos obligatorios:
-                                <ul>
-                                    <li><strong>DNI:</strong> Número de documento</li>
-                                    <li><strong>Nombre:</strong> Nombre del docente</li>
-                                    <li><strong>Apellido:</strong> Apellido del docente</li>
-                                    <li><strong>Teléfono:</strong> Número de contacto (opcional)</li>
-                                    <li><strong>Especialidad:</strong> Área de especialización (opcional)</li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step success">
-                                <strong>Continuar y guardar</strong><br>
-                                Haga clic en <strong>"Siguiente"</strong> y complete el proceso de creación
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="card warning">
-                    <h3>💡 Configuración del Docente</h3>
-                    <ul>
-                        <li>Después de crear el docente, debe asignarle las materias que dictará</li>
-                        <li>El docente recibirá credenciales de acceso al sistema</li>
-                        <li>Verifique que el DNI no esté duplicado en el sistema</li>
-                    </ul>
-                </div>
-            </section>
-
-            <!-- 4.7 Procedimiento Cargar Notas -->
-            <section id="proc-notas" class="section">
-                <h2>4.7. Procedimiento: Cargar Calificaciones</h2>
-                <div class="card info">
-                    <h3>👨‍🏫 Para Docentes y Autoridades</h3>
-                    <p>Este procedimiento puede ser realizado por docentes para sus materias asignadas.</p>
-                </div>
-
-                <div class="procedure">
-                    <h3>Paso a Paso - Carga de Notas</h3>
-                    <ol>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Acceder a Consulta por Curso</strong><br>
-                                Desde la pantalla principal, seleccione <strong>"Consulta por Curso"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Seleccionar curso y materia</strong><br>
-                                Complete los filtros de búsqueda:
-                                <ul>
-                                    <li><strong>Curso:</strong> Seleccione el curso</li>
-                                    <li><strong>Materia:</strong> Elija su materia</li>
-                                    <li><strong>Período:</strong> Cuatrimestre correspondiente</li>
-                                    <li><strong>Año:</strong> Año lectivo</li>
-                                </ul>
-                                Haga clic en <strong>"Buscar Curso"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Acceder a carga de calificaciones</strong><br>
-                                En el Perfil del Curso, haga clic en <strong>"Carga de Calificaciones"</strong>
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="screenshot-container">
-                    <img src="./13.png" alt="Pantalla de carga de calificaciones" class="screenshot">
-                    <div class="screenshot-caption">Figura 16: Pantalla de carga de calificaciones</div>
-                </div>
-
-                <div class="procedure">
-                    <ol start="4">
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Ingresar las notas</strong><br>
-                                Para cada alumno en la lista:
-                                <ul>
-                                    <li>Ingrese la nota en la columna correspondiente (Nota 1, Nota 2, Nota 3)</li>
-                                    <li>El sistema calcula automáticamente el promedio</li>
-                                    <li>Puede ingresar nota de <strong>Período Complementario</strong> si aplica</li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Guardar las calificaciones</strong><br>
-                                Para cada alumno, haga clic en el icono de <strong>✓ (check)</strong> en la columna "Acción"
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step success">
-                                <strong>Verificar cambios</strong><br>
-                                Confirme que los promedios y estados se actualizaron correctamente
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="card warning">
-                    <h3>📊 Escala de Calificaciones</h3>
-                    <ul>
-                        <li><strong>1-10:</strong> Escala numérica</li>
-                        <li><strong>≥ 6:</strong> Aprobado</li>
-                        <li><strong>< 6:</strong> Desaprobado</li>
-                        <li><strong>Promedio:</strong> Calculado automáticamente</li>
-                        <li><strong>Estado:</strong> Se actualiza según las notas</li>
-                    </ul>
-                </div>
-            </section>
-
-            <!-- 4.8 Procedimiento Cargar Asistencia -->
-            <section id="proc-asistencia" class="section">
-                <h2>4.8. Procedimiento: Cargar Asistencia</h2>
-                <div class="card info">
-                    <h3>👨‍🏫 Para Docentes y Autoridades</h3>
-                    <p>Registro diario de presencia y ausencia de alumnos.</p>
-                </div>
-
-                <div class="procedure">
-                    <h3>Paso a Paso - Carga de Asistencia</h3>
-                    <ol>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Acceder a Consulta por Curso</strong><br>
-                                Desde la pantalla principal, seleccione <strong>"Consulta por Curso"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Seleccionar curso</strong><br>
-                                Complete los filtros:
-                                <ul>
-                                    <li><strong>Curso, Materia, Período, Año</strong></li>
-                                </ul>
-                                Haga clic en <strong>"Buscar Curso"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Acceder a carga de asistencia</strong><br>
-                                En el Perfil del Curso, haga clic en <strong>"Carga de Asistencia"</strong>
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="screenshot-container">
-                    <img src="./14.png" alt="Pantalla de carga de asistencia" class="screenshot">
-                    <div class="screenshot-caption">Figura 17: Pantalla de carga de asistencia con botones P/A</div>
-                </div>
-
-                <div class="procedure">
-                    <ol start="4">
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Seleccionar fecha</strong><br>
-                                Elija la fecha de la clase usando el selector de fecha
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Registrar asistencia</strong><br>
-                                Para cada alumno en la lista:
-                                <ul>
-                                    <li>Haga clic en <strong>🟢 "P"</strong> para <strong>Presente</strong></li>
-                                    <li>Haga clic en <strong>🔴 "A"</strong> para <strong>Ausente</strong></li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step success">
-                                <strong>Guardar automáticamente</strong><br>
-                                El sistema guarda los cambios inmediatamente. No necesita hacer clic en "Guardar"
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="card warning">
-                    <h3>💡 Tips para la Asistencia</h3>
-                    <ul>
-                        <li>La asistencia se guarda automáticamente al hacer clic en P/A</li>
-                        <li>Puede cargar asistencia para días anteriores</li>
-                        <li>El sistema calcula automáticamente los porcentajes de asistencia</li>
-                        <li>Revise el resumen de asistencias para ver estadísticas</li>
-                    </ul>
-                </div>
-            </section>
-
-            <!-- 4.9 Procedimiento Comunicación -->
-            <section id="proc-comunicacion" class="section">
-                <h2>4.9. Procedimiento: Enviar Comunicación a Tutores</h2>
-
-                <div class="procedure">
-                    <h3>Paso a Paso - Envío de Comunicaciones</h3>
-                    <ol>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Seleccionar método de acceso</strong><br>
-                                Acceda desde:
-                                <ul>
-                                    <li><strong>Individual:</strong> "Consulta por Alumno" → "Perfil de Alumno" → <strong>"Generar Mail"</strong></li>
-                                    <li><strong>Grupal:</strong> "Consulta por Curso" → "Perfil del Curso" → <strong>"Comunicación Grupal"</strong></li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Configurar filtros de destino</strong><br>
-                                Complete:
-                                <ul>
-                                    <li><strong>Año Lectivo:</strong> Seleccione el año</li>
-                                    <li><strong>Tipo de Destinatario:</strong> Alumno Individual o Cursos Completos</li>
-                                    <li><strong>Filtro por Curso:</strong> Si aplica</li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Completar la comunicación</strong><br>
-                                Ingrese:
-                                <ul>
-                                    <li><strong>Tipo de Comunicación:</strong> Notificación General, Aviso, etc.</li>
-                                    <li><strong>Asunto *:</strong> Título del mensaje</li>
-                                    <li><strong>Mensaje / Observaciones *:</strong> Contenido del correo</li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step success">
-                                <strong>Enviar comunicación</strong><br>
-                                Haga clic en <strong>"Enviar Mail"</strong> para enviar a los tutores seleccionados
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="card warning">
-                    <h3>📧 Tipos de Comunicación</h3>
-                    <ul>
-                        <li><strong>Notificación General:</strong> Comunicados informativos</li>
-                        <li><strong>Aviso de Asistencia:</strong> Alertas por faltas</li>
-                        <li><strong>Notas Bajas:</strong> Comunicación sobre rendimiento</li>
-                        <li><strong>Eventos:</strong> Información sobre actividades</li>
-                    </ul>
-                </div>
-            </section>
-
-            <!-- 4.10 Procedimiento Certificados -->
-            <section id="proc-certificados" class="section">
-                <h2>4.10. Procedimiento: Generar Certificados y Documentos</h2>
-
-                <div class="procedure">
-                    <h3>Paso a Paso - Generación de Certificados</h3>
-                    <ol>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Acceder a perfil del alumno</strong><br>
-                                Desde "Consulta Académica", seleccione <strong>"Consulta por Alumno"</strong><br>
-                                Busque al alumno por DNI y Año
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Acceder a certificados</strong><br>
-                                En el Perfil del Alumno, haga clic en <strong>"Certificados y Actas"</strong>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Seleccionar tipo de documento</strong><br>
-                                Elija entre las opciones disponibles:
-                                <ul>
-                                    <li><strong>Constancia de Alumno Regular</strong></li>
-                                    <li><strong>Certificado Abono Escolar</strong></li>
-                                    <li><strong>Certificado Comprobante de Vacante</strong></li>
-                                    <li><strong>Certificado Escolar</strong></li>
-                                    <li><strong>Constancia de Alumno en Trámite</strong></li>
-                                    <li><strong>Acta Volante Examen</strong></li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step">
-                                <strong>Completar datos editables (si aplica)</strong><br>
-                                Para algunos certificados puede necesitar:
-                                <ul>
-                                    <li><strong>Solicitante:</strong> Nombre de quien solicita</li>
-                                    <li><strong>Ante:</strong> Organismo destino</li>
-                                    <li><strong>Objeto:</strong> Finalidad del trámite</li>
-                                    <li><strong>N° de Boleta:</strong> Número de referencia</li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="procedure-step success">
-                                <strong>Generar y descargar</strong><br>
-                                Use los botones:
-                                <ul>
-                                    <li><strong>"Volver"</strong> para cancelar</li>
-                                    <li><strong>"Descargar PDF"</strong> para guardar</li>
-                                    <li><strong>"Imprimir"</strong> para imprimir directamente</li>
-                                </ul>
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-            </section>
-
-            <!-- 5. Funcionalidades Section -->
-            <section id="funcionalidades" class="section">
-                <h2>5. Funcionalidades Principales</h2>
-                <p>Resumen de todas las funcionalidades disponibles en el sistema.</p>
-                
-                <div class="card">
-                    <h3>Módulos Disponibles</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Módulo</th>
-                                    <th>Descripción</th>
-                                    <th>Acceso</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>Gestión de Alumnos</strong></td>
-                                    <td>Altas, bajas, modificaciones y consulta de estudiantes</td>
-                                    <td>Autoridades</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Gestión de Docentes</strong></td>
-                                    <td>Administración del personal docente</td>
-                                    <td>Autoridades</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Gestión de Cursos</strong></td>
-                                    <td>Creación y configuración de cursos</td>
-                                    <td>Autoridades</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Gestión de Materias</strong></td>
-                                    <td>Catálogo de asignaturas</td>
-                                    <td>Autoridades</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Calificaciones</strong></td>
-                                    <td>Carga y consulta de notas</td>
-                                    <td>Docentes</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Asistencias</strong></td>
-                                    <td>Registro de presencia/ausencia</td>
-                                    <td>Docentes</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Comunicaciones</strong></td>
-                                    <td>Envío de correos a tutores</td>
-                                    <td>Todos</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Certificados</strong></td>
-                                    <td>Generación de documentación oficial</td>
-                                    <td>Autoridades</td>
-                                </tr>
-                            </tbody>
-                        </table>
+              </li>
+                    <div class="screenshot-container">
+                      <img
+                        src="./homercertificados.png"
+                        alt="home certificados"
+                        class="screenshot"
+                      />
+                      <div class="screenshot-caption">
+                        Seleccionar certificados y actas
+                      </div>
                     </div>
+              <li>
+                <div class="procedure-step">
+                  <strong>Seleccionar tipo de documento</strong><br />
+                  Elija entre las opciones disponibles:
+                  <ul>
+                    <li><strong>Constancia de Alumno Regular</strong></li>
+                    <li><strong>Certificado Abono Escolar</strong></li>
+                    <li><strong>Certificado Comprobante de Vacante</strong></li>
+                    <li><strong>Certificado Escolar</strong></li>
+                    <li><strong>Constancia de Alumno en Trámite</strong></li>
+                    <li><strong>Acta Volante Examen</strong></li>
+                  </ul>
                 </div>
-            </section>
-            
-            <!-- 6. Configuración Section -->
-            <section id="configuracion" class="section">
-                <h2>6. Configuración de la Cuenta</h2>
-                
-                <div class="card">
-                    <h3>Editar tu Perfil</h3>
-                    <p>(Generalmente accesible haciendo clic en su nombre o un icono de perfil 👤 en la barra superior).</p>
-                    <ul>
-                        <li><strong>Cambiar Contraseña:</strong> Busque la sección "Seguridad" en su perfil para actualizar su contraseña.</li>
-                    </ul>
+              </li>
+                                  <div class="screenshot-container">
+                      <img
+                        src="./seleccionar certificado.png"
+                        alt="Pantalla de carga de asistencia"
+                        class="screenshot"
+                      />
+                      <div class="screenshot-caption">
+                        Seleccionar tipo de certificado a generar
+                      </div>
+                    </div>
+              <li>
+                <div class="procedure-step">
+                  <strong>Completar datos editables (si aplica)</strong><br />
+                  Para algunos certificados puede necesitar:
+                  <ul>
+                    <li>
+                      <strong>Solicitante:</strong> Nombre de quien solicita
+                    </li>
+                    <li><strong>Ante:</strong> Organismo destino</li>
+                    <li><strong>Objeto:</strong> Finalidad del trámite</li>
+                    <li><strong>N° de Boleta:</strong> Número de referencia</li>
+                  </ul>
                 </div>
+              </li>
+                                                <div class="screenshot-container">
+                      <img
+                        src="./completardatoscertificados.png"
+                        alt="Pantalla de carga de asistencia"
+                        class="screenshot"
+                      />
+                      <div class="screenshot-caption">
+                        Completar datos editables en certificados
+                      </div>
+                    </div>
+              <li>
+                <div class="procedure-step success">
+                  <strong>Generar y descargar</strong><br />
+                  Use los botones:
+                  <ul>
+                    <li><strong>"Volver"</strong> para cancelar</li>
+                    <li><strong>"Descargar PDF"</strong> para guardar</li>
+                    <li>
+                      <strong>"Imprimir"</strong> para imprimir directamente
+                    </li>
+                  </ul>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </section>
 
-                <div class="card warning">
-                    <h3>Seguridad</h3>
-                    <ul>
-                        <li>Haga clic en <strong>"Cerrar Sesión"</strong> en la barra de navegación superior al finalizar su trabajo.</li>
-                        <li>No comparta sus credenciales con nadie.</li>
-                        <li>Cambie su contraseña periódicamente.</li>
-                    </ul>
-                </div>
-            </section>
-            
-            <!-- 7. Solución de Problemas Section -->
-            <section id="solucion-problemas" class="section">
-                <h2>7. Solución de Problemas (FAQ)</h2>
-                
-                <h3>Preguntas Frecuentes (FAQ)</h3>
+        <!-- 5. Funcionalidades Section -->
+        <section id="funcionalidades" class="section">
+          <h2>5. Funcionalidades Principales</h2>
+          <p>Resumen de todas las funcionalidades disponibles en el sistema.</p>
 
-                <div class="card warning">
-                    <h4>P: No puedo iniciar sesión, ¿qué hago?</h4>
-                    <p>R: Asegúrese de que está usando el <strong>Usuario</strong> y <strong>Contraseña</strong> correctos. Si el problema persiste, contacte a la administración del instituto para verificar sus credenciales.</p>
-                </div>
-                
-                <div class="card warning">
-                    <h4>P: ¿Cómo veo la información de un alumno específico?</h4>
-                    <p>R: En la pantalla "Consulta Académica", seleccione "Consulta por Alumno". Ingrese el <strong>DNI</strong> del alumno y seleccione el <strong>Año</strong> lectivo. Luego, haga clic en "Buscar Alumno" para acceder a su perfil.</p>
-                </div>
+          <div class="card">
+            <h3>Módulos Disponibles</h3>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Módulo</th>
+                    <th>Descripción</th>
+                    <th>Acceso</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Gestión de Alumnos</strong></td>
+                    <td>
+                      Altas, bajas, modificaciones y consulta de estudiantes
+                    </td>
+                    <td>Autoridades</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Gestión de Docentes</strong></td>
+                    <td>Administración del personal docente</td>
+                    <td>Autoridades</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Gestión de Cursos</strong></td>
+                    <td>Creación y configuración de cursos</td>
+                    <td>Autoridades</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Gestión de Materias</strong></td>
+                    <td>Catálogo de asignaturas</td>
+                    <td>Autoridades</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Calificaciones</strong></td>
+                    <td>Carga y consulta de notas</td>
+                    <td>Docentes</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Asistencias</strong></td>
+                    <td>Registro de presencia/ausencia</td>
+                    <td>Docentes</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Comunicaciones</strong></td>
+                    <td>Envío de correos a tutores</td>
+                    <td>Todos</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Certificados</strong></td>
+                    <td>Generación de documentación oficial</td>
+                    <td>Autoridades</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
 
-                <div class="card warning">
-                    <h4>P: La página no carga correctamente.</h4>
-                    <p>R: Intente refrescar la página (Ctrl+R o Cmd+R). Si el problema persiste, borre la caché de su navegador o pruebe en un navegador diferente.</p>
-                </div>
+        <!-- 6. Configuración Section -->
+        <section id="configuracion" class="section">
+          <h2>6. Configuración de la Cuenta</h2>
 
-                <div class="card warning">
-                    <h4>P: ¿Cómo cargo las notas de mi materia?</h4>
-                    <p>R: Vaya a "Consulta Académica" → "Consulta por Curso". Busque su curso y materia. En el "Perfil del Curso", haga clic en "Carga de Calificaciones".</p>
-                </div>
+          <div class="card">
+            <h3>Cambio de contraseña</h3>
+            <p>
+              (Generalmente accesible en login de Inicio de Sesion).
+            </p>
+            <ul>
+              <li>
+                <strong>Cambiar Contraseña:</strong> Busque la sección
+                "Olvide mi contraseña "en la pantalla de Login
+              </li>
+            </ul>
+          </div>
 
-                <div class="card warning">
-                    <h4>P: ¿Cómo tomo asistencia?</h4>
-                    <p>R: Vaya a "Consulta Académica" → "Consulta por Curso". Busque su curso y materia. En el "Perfil del Curso", haga clic en "Carga de Asistencia" y utilice los botones 'P' y 'A' para cada alumno.</p>
-                </div>
+          <div class="card warning">
+            <h3>Seguridad</h3>
+            <ul>
+              <li>
+                Haga clic en <strong>"Cerrar Sesión"</strong> en la barra de
+                navegación superior al finalizar su trabajo.
+              </li>
+              <li>No comparta sus credenciales con nadie.</li>
+              <li>Cambie su contraseña periódicamente.</li>
+            </ul>
+          </div>
+        </section>
 
-            </section>
-            
-            <!-- 8. Soporte Section -->
-            <section id="soporte" class="section">
-                <h2>8. Soporte y Contacto</h2>
-                <p>Si no encuentras la respuesta en este manual, nuestro equipo de soporte está listo para ayudarte.</p>
-                
-                <div class="card">
-                    <h3>Canales de Soporte</h3>
-                    <ul>
-                        <li>📧 <strong>Email de Soporte:</strong> <code>devtuc25@gmail.com</code></li>
-                        <li>📞 <strong>Teléfono:</strong> <code>3814759359</code></li>
-                        <li>🕒 <strong>Horario:</strong> <code>Lunes a Viernes de 8:00 a 17:00 hs</code></li>
-                    </ul>
-                </div>
-                
-                <div class="card warning">
-                    <h3>Información Requerida para Reportes</h3>
-                    <p>Al contactar a soporte, por favor proporcione:</p>
-                    <ul>
-                        <li>Su nombre de usuario y rol (docente/autoridad).</li>
-                        <li>La sección donde ocurre el problema (ej. "Carga de Notas").</li>
-                        <li>Una descripción del error o lo que intentaba hacer.</li>
-                        <li>(Opcional pero útil) Una captura de pantalla del error.</li>
-                    </ul>
-                </div>
+        <!-- 7. Solución de Problemas Section -->
+        <section id="solucion-problemas" class="section">
+          <h2>7. Solución de Problemas (FAQ)</h2>
 
-                <div class="card success">
-                    <h3>Soporte Prioritario</h3>
-                    <p><strong>Nota:</strong> El proyecto incluye un servicio de soporte prioritario durante los primeros 2 meses desde la entrega oficial del sistema.</p>
-                </div>
+          <h3>Preguntas Frecuentes (FAQ)</h3>
 
-                <div class="card">
-                    <p style="text-align: center; opacity: 0.7; font-size: 0.9em;">
-                        <strong>© 2025 Instituto Carlos Guido Spano</strong><br>
-                        Manual Versión 3.0 - Completo con Todos los Procedimientos
-                    </p>
-                </div>
-            </section>
-        </main>
+          <div class="card warning">
+            <h4>P: No puedo iniciar sesión, ¿qué hago?</h4>
+            <p>
+              R: Asegúrese de que está usando el <strong>Usuario</strong> y
+              <strong>Contraseña</strong> correctos. Si el problema persiste,
+              contacte a la administración del instituto para verificar sus
+              credenciales.
+            </p>
+          </div>
+
+          <div class="card warning">
+            <h4>P: ¿Cómo veo la información de un alumno específico?</h4>
+            <p>
+              R: En la pantalla "Consulta Académica", seleccione "Consulta por
+              Alumno". Ingrese el <strong>DNI</strong> del alumno y seleccione
+              el <strong>Año</strong> lectivo. Luego, haga clic en "Buscar
+              Alumno" para acceder a su perfil.
+            </p>
+          </div>
+
+          <div class="card warning">
+            <h4>P: La página no carga correctamente.</h4>
+            <p>
+              R: Intente refrescar la página (Ctrl+R o Cmd+R). Si el problema
+              persiste, borre la caché de su navegador o pruebe en un navegador
+              diferente.
+            </p>
+          </div>
+
+          <div class="card warning">
+            <h4>P: ¿Cómo cargo las notas de mi materia?</h4>
+            <p>
+              R: Vaya a "Consulta Académica" → "Consulta por Curso". Busque su
+              curso y materia. En el "Perfil del Curso", haga clic en "Carga de
+              Calificaciones".
+            </p>
+          </div>
+
+          <div class="card warning">
+            <h4>P: ¿Cómo tomo asistencia?</h4>
+            <p>
+              R: Vaya a "Consulta Académica" → "Consulta por Curso". Busque su
+              curso y materia. En el "Perfil del Curso", haga clic en "Carga de
+              Asistencia" y utilice los botones 'P' y 'A' para cada alumno.
+            </p>
+          </div>
+        </section>
+
+        <!-- 8. Soporte Section -->
+        <section id="soporte" class="section">
+          <h2>8. Soporte y Contacto</h2>
+          <p>
+            Si no encuentras la respuesta en este manual, nuestro equipo de
+            soporte está listo para ayudarte.
+          </p>
+
+          <div class="card">
+            <h3>Canales de Soporte</h3>
+            <ul>
+              <li>
+                📧 <strong>Email de Soporte:</strong>
+                <code>devtuc25@gmail.com</code>
+              </li>
+              <li>📞 <strong>Teléfono:</strong> <code>3814759359</code></li>
+              <li>
+                🕒 <strong>Horario:</strong>
+                <code>Lunes a Viernes de 8:00 a 17:00 hs</code>
+              </li>
+            </ul>
+          </div>
+
+          <div class="card warning">
+            <h3>Información Requerida para Reportes</h3>
+            <p>Al contactar a soporte, por favor proporcione:</p>
+            <ul>
+              <li>Su nombre de usuario y rol (docente/autoridad).</li>
+              <li>
+                La sección donde ocurre el problema (ej. "Carga de Notas").
+              </li>
+              <li>Una descripción del error o lo que intentaba hacer.</li>
+              <li>(Opcional pero útil) Una captura de pantalla del error.</li>
+            </ul>
+          </div>
+
+          <div class="card success">
+            <h3>Soporte Prioritario</h3>
+            <p>
+              <strong>Nota:</strong> El proyecto incluye un servicio de soporte
+              prioritario durante los primeros 2 meses desde la entrega oficial
+              del sistema.
+            </p>
+          </div>
+
+          <div class="card">
+            <p style="text-align: center; opacity: 0.7; font-size: 0.9em">
+              <strong>© 2025 Instituto Carlos Guido Spano</strong><br />
+              Manual Versión 3.0 - Completo con Todos los Procedimientos
+            </p>
+          </div>
+        </section>
+      </main>
     </div>
 
     <script>
-        // Navigation functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const navLinks = document.querySelectorAll('.nav-link');
-            const sections = document.querySelectorAll('.section');
-            const sidebar = document.getElementById('sidebar');
-            const parentLinks = document.querySelectorAll('.parent-link');
+      // Navigation functionality
+      document.addEventListener("DOMContentLoaded", function () {
+        const navLinks = document.querySelectorAll(".nav-link");
+        const sections = document.querySelectorAll(".section");
+        const sidebar = document.getElementById("sidebar");
+        const parentLinks = document.querySelectorAll(".parent-link");
 
-            // Function to set active section
-            function setActiveSection(sectionId) {
-                if (!sectionId) return;
+        // Function to set active section
+        function setActiveSection(sectionId) {
+          if (!sectionId) return;
 
-                // Hide all sections
-                sections.forEach(section => {
-                    section.classList.remove('active');
-                });
-                
-                // Show target section
-                const targetSection = document.getElementById(sectionId);
-                if (targetSection) {
-                    targetSection.classList.add('active');
-                    // Scroll to top of main content
-                    document.querySelector('.main-content').scrollTop = 0;
-                }
-                
-                // Update active nav link
-                navLinks.forEach(link => {
-                    link.classList.remove('active');
-                    if (link.getAttribute('data-section') === sectionId) {
-                        link.classList.add('active');
+          // Hide all sections
+          sections.forEach((section) => {
+            section.classList.remove("active");
+          });
 
-                        // Open parent submenu if it exists
-                        const parentSubmenu = link.closest('.submenu');
-                        if(parentSubmenu) {
-                            parentSubmenu.classList.add('active');
-                            parentSubmenu.previousElementSibling.classList.add('active');
-                        }
-                    }
-                });
-                
-                // Close mobile sidebar if open
-                if (window.innerWidth <= 900) {
-                    sidebar.classList.remove('active');
-                }
+          // Show target section
+          const targetSection = document.getElementById(sectionId);
+          if (targetSection) {
+            targetSection.classList.add("active");
+            // Scroll to top of main content
+            document.querySelector(".main-content").scrollTop = 0;
+          }
+
+          // Update active nav link
+          navLinks.forEach((link) => {
+            link.classList.remove("active");
+            if (link.getAttribute("data-section") === sectionId) {
+              link.classList.add("active");
+
+              // Open parent submenu if it exists
+              const parentSubmenu = link.closest(".submenu");
+              if (parentSubmenu) {
+                parentSubmenu.classList.add("active");
+                parentSubmenu.previousElementSibling.classList.add("active");
+              }
             }
+          });
 
-            // Handle submenu toggling
-            parentLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const sectionId = this.getAttribute('data-section');
-                    const submenu = this.nextElementSibling;
-                    
-                    // Toggle submenu
-                    if(submenu && submenu.classList.contains('submenu')) {
-                        submenu.classList.toggle('active');
-                        this.classList.toggle('active');
-                    }
-                    
-                    // Navigate to the parent section
-                    setActiveSection(sectionId);
-                });
-            });
-
-            // Handle regular link clicks
-            navLinks.forEach(link => {
-                if (!link.classList.contains('parent-link')) {
-                    link.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        const sectionId = this.getAttribute('data-section');
-                        setActiveSection(sectionId);
-                        // Update hash in URL
-                        window.location.hash = sectionId;
-                    });
-                }
-            });
-            
-            // Set initial active section based on URL hash or default
-            let initialSection = window.location.hash.substring(1);
-            if (!initialSection || !document.getElementById(initialSection)) {
-                initialSection = 'introduccion';
-            }
-            setActiveSection(initialSection);
-        });
-        
-        // Mobile sidebar toggle
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('active');
+          // Close mobile sidebar if open
+          if (window.innerWidth <= 900) {
+            sidebar.classList.remove("active");
+          }
         }
-        
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', function(e) {
-            const sidebar = document.getElementById('sidebar');
-            const mobileBtn = document.querySelector('.mobile-menu-btn');
-            
-            if (window.innerWidth <= 900 && 
-                sidebar.classList.contains('active') &&
-                !sidebar.contains(e.target) && 
-                !mobileBtn.contains(e.target)) {
-                sidebar.classList.remove('active');
+
+        // Handle submenu toggling
+        parentLinks.forEach((link) => {
+          link.addEventListener("click", function (e) {
+            e.preventDefault();
+            const sectionId = this.getAttribute("data-section");
+            const submenu = this.nextElementSibling;
+
+            // Toggle submenu
+            if (submenu && submenu.classList.contains("submenu")) {
+              submenu.classList.toggle("active");
+              this.classList.toggle("active");
             }
+
+            // Navigate to the parent section
+            setActiveSection(sectionId);
+          });
         });
+
+        // Handle regular link clicks
+        navLinks.forEach((link) => {
+          if (!link.classList.contains("parent-link")) {
+            link.addEventListener("click", function (e) {
+              e.preventDefault();
+              const sectionId = this.getAttribute("data-section");
+              setActiveSection(sectionId);
+              // Update hash in URL
+              window.location.hash = sectionId;
+            });
+          }
+        });
+
+        // Set initial active section based on URL hash or default
+        let initialSection = window.location.hash.substring(1);
+        if (!initialSection || !document.getElementById(initialSection)) {
+          initialSection = "introduccion";
+        }
+        setActiveSection(initialSection);
+      });
+
+      // Mobile sidebar toggle
+      function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        sidebar.classList.toggle("active");
+      }
+
+      // Close sidebar when clicking outside on mobile
+      document.addEventListener("click", function (e) {
+        const sidebar = document.getElementById("sidebar");
+        const mobileBtn = document.querySelector(".mobile-menu-btn");
+
+        if (
+          window.innerWidth <= 900 &&
+          sidebar.classList.contains("active") &&
+          !sidebar.contains(e.target) &&
+          !mobileBtn.contains(e.target)
+        ) {
+          sidebar.classList.remove("active");
+        }
+      });
     </script>
-</body>
+  </body>
 </html>
